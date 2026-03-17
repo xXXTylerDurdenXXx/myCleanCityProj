@@ -1,0 +1,85 @@
+.leaderboardWrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 100px 20px 40px; 
+    min-height: 100vh;
+    min-width: 100vw;
+    background-color: #e8f0f3;
+}
+
+.leaderboardCard {
+    width: 100%;
+    max-width: 800px;
+    background: #f3f9fb;
+    border-radius: 20px;
+    border: 2px solid #0077c8;
+    padding: 30px;
+    text-align: center;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+}
+
+.title {
+    color: #1e3a8a;
+    margin-bottom: 5px;
+}
+
+.subtitle {
+    color: #667eea;
+    margin-bottom: 25px;
+    font-size: 14px;
+}
+
+.filterButtons {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 25px;
+}
+
+.filterButtons button {
+    background: none;
+    border: 2px solid #1e90ff;
+    border-radius: 20px;
+    padding: 8px 20px;
+    color: #1e90ff;
+    cursor: pointer;
+    font-weight: 600;
+    transition: 0.3s;
+}
+
+.filterButtons button.active, 
+.filterButtons button:hover {
+    background-color: #1e90ff;
+    color: white;
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+}
+
+.table th {
+    padding: 15px;
+    color: #1e3a8a;
+    border-bottom: 2px solid #1e90ff;
+    text-align: left;
+}
+
+.table td {
+    padding: 15px;
+    text-align: left;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.rankCol { width: 80px; text-align: center !important; }
+.pointsCol { text-align: right !important; color: #0077c8; font-weight: bold; }
+.top1 { background-color: #fff9c4; font-weight: bold; }
+.top2 { background-color: #f5f5f5; }
+.top3 { background-color: #fff3e0; }
+
+.error {
+    padding: 20px;
+    color: #c53030;
+}
