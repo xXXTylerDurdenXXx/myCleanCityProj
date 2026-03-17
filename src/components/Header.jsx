@@ -35,6 +35,11 @@ const Header = () => {
           <Link to="/map" className={s['nav-link']}>Карта</Link>
           <Link to="/leaderboard" className={s['nav-link']}>Лидеры</Link>
           <Link to="/profile" className={s['nav-link']}>Профиль</Link>
+          {isAdmin && (
+            <Link translate='no' to="/report" className={s['nav-link']}>
+              <i className={s['nav-link']}></i> Фото-отчеты
+            </Link>
+          )}
         </nav>
       </div>
     </header>

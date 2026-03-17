@@ -1,0 +1,131 @@
+.wrapper {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding-top: 100px;
+}
+
+.container {
+    display: flex;
+    justify-content: center;
+    padding: 20px;
+}
+
+.card {
+    background: white;
+    width: 100%;
+    max-width: 500px;
+    border-radius: 24px;
+    padding: 30px;
+    box-shadow: 0 15px 40px rgba(0,0,0,0.2);
+    text-align: center;
+}
+
+.title {
+    color: #1e3a8a;
+    margin-bottom: 25px;
+}
+
+.imageBox {
+    position: relative;
+    border-radius: 16px;
+    overflow: hidden;
+    margin-bottom: 20px;
+}
+
+.imageBox img {
+    width: 100%;
+    height: 300px;
+    object-fit: cover;
+}
+
+.typeBadge {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: #1e90ff;
+    color: white;
+    padding: 5px 15px;
+    border-radius: 50px;
+    font-weight: bold;
+}
+
+.info {
+    text-align: left;
+    margin-bottom: 25px;
+    font-size: 16px;
+}
+
+.points {
+    color: #10b981;
+    font-weight: bold;
+}
+
+.actions {
+    display: flex;
+    gap: 15px;
+}
+
+.approveBtn, .rejectBtn {
+    flex: 1;
+    padding: 15px;
+    border: none;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: 0.3s;
+}
+
+.approveBtn { background: #10b981; color: white; }
+.rejectBtn { background: #ef4444; color: white; }
+
+.rejectForm textarea {
+    width: 100%;
+    height: 100px;
+    padding: 12px;
+    border: 2px solid #eee;
+    border-radius: 12px;
+    margin-bottom: 10px;
+    resize: none;
+}
+
+.sendReject {
+    background: #ef4444;
+    color: white;
+    border: none;
+    padding: 12px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.cancelBtn {
+    background: #f1f5f9;
+    border: none;
+    padding: 12px;
+    border-radius: 10px;
+    margin-left: 10px;
+    cursor: pointer;
+}
+
+.emptyState i {
+    font-size: 60px;
+    color: #1e90ff;
+    margin-bottom: 15px;
+}
+
+.emptyState h3 { margin-bottom: 10px; color: #333; }
+.emptyState p { color: #64748b; margin-bottom: 20px; }
+
+.backBtn {
+    padding: 10px 20px;
+    background: #667eea;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+}

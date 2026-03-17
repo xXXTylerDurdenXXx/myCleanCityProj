@@ -7,6 +7,7 @@ import MapPage from './pages/MapPage';
 import Leaderboard from './pages/Leaderboard';
 import Profile from './pages/Profile';
 import AdminPanel from './pages/AdminPanel';
+import ReportReview from './pages/ReportReview';
 import './App.css';
 
 const App = () => {
@@ -37,6 +38,7 @@ const App = () => {
           <Route path='/leaderboard' element={<Leaderboard/>} />
           <Route path='/profile' element={<Profile/>} />
           <Route path='/admin' element={isAdmin ? <AdminPanel /> : <Navigate to="/map" />} />
+          <Route path='/report' element={isAdmin ? <ReportReview /> : <Navigate to="/map" />} />
 
 
           <Route path="*" element={<Navigate to="/" />} />
