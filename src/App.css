@@ -16,8 +16,7 @@ body, html, #root {
 }
 
 body {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    
+    background: linear-gradient(135deg, #2980B9 0%);
     margin: 0;
     padding: 0;
 }
@@ -35,7 +34,7 @@ body {
     width: 100%;
     height: 80px;
     background-color: #ffffff;
-    border-bottom: 2px solid #1e90ff;
+    border-bottom: 2px solid #2980B9;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -108,7 +107,7 @@ input:focus {
 .btn {
     width: 100%;
     padding: 14px;
-    background: #667eea;
+    background: #2980B9;
     color: white;
     border: none;
     border-radius: 10px;
@@ -120,7 +119,7 @@ input:focus {
 }
 
 .btn:hover {
-    background: #764ba2;
+    background: #2980B9;
     transform: translateY(-1px);
     box-shadow: 0 5px 15px rgba(0,0,0,0.1);
 }

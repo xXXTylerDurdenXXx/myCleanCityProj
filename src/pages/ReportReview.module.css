@@ -1,6 +1,6 @@
 .wrapper {
     min-height: 100vh;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #2980B9 0%);
     padding-top: 100px;
 }
 
@@ -42,7 +42,7 @@
     position: absolute;
     top: 15px;
     right: 15px;
-    background: #1e90ff;
+    background: #2980B9;
     color: white;
     padding: 5px 15px;
     border-radius: 50px;
@@ -80,8 +80,8 @@
     transition: 0.3s;
 }
 
-.approveBtn { background: #10b981; color: white; }
-.rejectBtn { background: #ef4444; color: white; }
+.approveBtn { background: #16A085; color: white; }
+.rejectBtn { background: #D35400; color: white; }
 
 .rejectForm textarea {
     width: 100%;
@@ -94,7 +94,7 @@
 }
 
 .sendReject {
-    background: #ef4444;
+    background: #D35400;
     color: white;
     border: none;
     padding: 12px;
