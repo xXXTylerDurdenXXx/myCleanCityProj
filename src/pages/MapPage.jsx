@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Header from '../components/Header';
+import api from '../api/axios';
 
 const MapPage = () => {
   const mapRef = useRef(null);
@@ -16,14 +17,14 @@ const MapPage = () => {
   };
 
   const user = parseJwt(token);
-  const isAdmin = user?.role === "Admin" || user?.role === "Moderator";
+  const isAdmin = (user?.role === "Admin" || user?.role === "Moderator");
 
   useEffect(() => {
     if (window.ymaps) {
       window.ymaps.ready(initMap);
     }
 
-    function initMap() {
+    async function initMap() {
       if (mapRef.current.innerHTML !== "") return;
 
       const map = new window.ymaps.Map(mapRef.current, {
@@ -33,89 +34,91 @@ const MapPage = () => {
       });
 
       map.behaviors.disable('doubleClickZoom');
-      loadPoints(map);
+      fetchPoints(map);
 
       if (isAdmin) {
-        map.events.add('dblclick', (e) => {
+        map.events.add('dblclick', async (e) => {
           const coords = e.get('coords');
           const type = prompt("Тип точки (Пластик, Бумага):", "Общий");
-          if (type) savePoint(map, { latitude: coords[0], longitude: coords[1], type });
+          if(type){
+            await savePointOnServer(map, coords, type, null);
+          }
         });
       }
     }
 
-    async function loadPoints(map) {
+    async function fetchPoints(map) {
       try {
-        const mockPoints = [
-          { 
-            id: 1, 
-            latitude: 51.7682, 
-            longitude: 55.0968, 
-            type: "Пластик", 
-            address: "пр. Гагарина, 21", 
-            points: 50,
-            img: "https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?auto=format&fit=crop&w=400" 
-          },
-          { 
-            id: 2, 
-            latitude: 51.7750, 
-            longitude: 55.1000, 
-            type: "Бумага", 
-            address: "ул. Чкалова, 15", 
-            points: 30,
-            img: "https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?auto=format&fit=crop&w=400" 
-          }
-        ];
-        mockPoints.forEach(p => addPlacemark(map, p));
+        const response = await api.get('/disposalpoints'); 
+        const points = response.data;
+        points.forEach(p => addPlacemark(map, p));
       } catch (e) { console.error(e); }
+    }
+    async function savePointOnServer(map, coords, type, imageFile) {
+      try {
+        const formData = new FormData();
+        
+        formData.append('Name', `Точка: ${type}`);
+        formData.append('Latitude', coords[0]);
+        formData.append('Longitude', coords[1]);
+        formData.append('Address', 'Адрес из геокодера или промпта');
+      
+        if (imageFile) {
+          formData.append('image', imageFile); 
+        }
+
+        const response = await api.post('/disposalpoints', formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data' 
+          }
+        });
+
+        if (response.status === 201) {
+          addPlacemark(map, response.data);
+          alert("Точка и фото успешно сохранены!");
+        }
+      } catch (e) {
+        console.error("Ошибка сохранения:", e.response?.data || e.message);
+        alert("Не удалось сохранить точку с фото");
+      }
     }
 
     function addPlacemark(map, point) {
+      const typesText = point.wasteTypes && point.wasteTypes.length > 0 
+        ? point.wasteTypes.join(', ') 
+        : "Общий";
+
       const placemark = new window.ymaps.Placemark([point.latitude, point.longitude], {
-        hintContent: point.type,
-        balloonContent: `<b>Тип:</b> ${point.type}`
+        hintContent: point.type || "Точка сбора",
+        balloonContent: `
+          <div>
+            <strong>${point.name || 'Точка сбора'}</strong><br/>
+            <b>Адрес:</b> ${point.address || 'Не указан'}<br/>
+            <b>Типы:</b> ${typesText}
+          </div>
+        `
       },
       {
         iconLayout: 'default#image',
         iconImageHref: '/Resources/point.png',
         iconImageSize: [30,40],
-        iconImagrOffset: [-20,-40],
+        iconImagrOffset: [-15,-40],
         hasBalloon: false
 
       }
     );
       placemark.events.add('click', () => {
         console.log("Клик по точке:", point)
-        setSelectedPoint(point)
+        setSelectedPoint({
+          ...point,
+          displayTypes: typesText
+        });
       });
     
     
       map.geoObjects.add(placemark);
     }
-
-    async function savePoint(map, data) {
-        const fakeSavedPoint = {
-        ...data,
-        id: Math.floor(Math.random() * 1000) ,
-        
-        };
-
-       addPlacemark(map, fakeSavedPoint);
-       alert("Точка временно создана (только в этом сеансе)!");
-    //   const res = await fetch('/api/map', {
-    //     method: 'POST',
-    //     headers: { 
-    //       'Content-Type': 'application/json',
-    //       'Authorization': `Bearer ${token}` 
-    //     },
-    //     body: JSON.stringify(data)
-    //   });
-    //   if (res.ok) {
-    //     const saved = await res.json();
-    //     addPlacemark(map, saved);
-    //   }
-    }
-  }, []);
+  }, [isAdmin]);
 
   return (
   <div className="map-page-wrapper"> 

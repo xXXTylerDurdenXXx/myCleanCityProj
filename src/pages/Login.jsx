@@ -1,45 +1,55 @@
 import React,{useState} from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import api from '../api/axios';
 
 
 const Login = () => {
   
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const navigate = useNavigate();
   const handleSubmit = async (e) => {   
     e.preventDefault();
+    setLoading(true);
     console.log("Отправка запроса на сервер...");
+
+    const loginData = {
+      email: email,
+      password: password
+    };
   
-    try {
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          email: email,
-          password: password
-        })
-      });
-      if (response.ok) {
-        const result = await response.json();
+   try {
+      console.log("Попытка входа...");
+      const response = await api.post('/auth/login', loginData);
+
+      const result = response.data;
+
+      if (response.status === 200) {
         console.log("Успешный вход:", result);
         
-        localStorage.setItem('token', result.token);
-        
-        alert("Добро пожаловать!");
+        if (result.token) {
+          localStorage.setItem('token', result.token);
+        }
+
+        if (result.username) {
+          localStorage.setItem('username', result.name);
+        }
+
         navigate('/map'); 
-      } 
-      else {
-        const errorData = await response.json();
-        alert("Ошибка: " + (errorData.error || "Неверный логин или пароль"));
       }
     } catch (error) {
-      console.error("Критическая ошибка:", error);
-      alert("Сервер недоступен. Проверьте запущен ли бэкенд.");
-    }   
+      console.error("Ошибка при входе:", error);
+      
+      const errorMsg = error.response?.data?.error || 
+                       error.response?.data?.message || 
+                       "Неверный логин или пароль";
+                       
+      alert("Ошибка: " + errorMsg);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

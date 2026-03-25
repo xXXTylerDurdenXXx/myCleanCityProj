@@ -25,8 +25,9 @@ const App = () => {
 
   const user = parseJwt(token);
   // ОБЪЯВЛЯЕМ isAdmin здесь:
-  //const isAdmin = user?.role === "Admin";
-  const isAdmin = true;
+  const isAdmin = user?.role === "Admin";
+  const isModerator = user?.role === "Moderator"
+
   return (
     <Router>
       <div className="app-container">
@@ -38,7 +39,7 @@ const App = () => {
           <Route path='/leaderboard' element={<Leaderboard/>} />
           <Route path='/profile' element={<Profile/>} />
           <Route path='/admin' element={isAdmin ? <AdminPanel /> : <Navigate to="/map" />} />
-          <Route path='/report' element={isAdmin ? <ReportReview /> : <Navigate to="/map" />} />
+          <Route path='/report' element={isAdmin || isModerator ? <ReportReview /> : <Navigate to="/map" />} />
 
 
           <Route path="*" element={<Navigate to="/" />} />

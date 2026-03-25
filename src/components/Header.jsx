@@ -16,8 +16,8 @@ const Header = () => {
 
     const user = parseJwt(token);
     // Проверяем, админ ли пользователь
-   // const isAdmin = user?.role === "Admin";
-    const isAdmin = true;
+    const isAdmin = user?.role === "Admin";
+    const isModerator = user?.role === "Moderator"
 
   return (
     <header className={s.header}>
@@ -35,7 +35,7 @@ const Header = () => {
           <Link to="/map" className={s['nav-link']}>Карта</Link>
           <Link to="/leaderboard" className={s['nav-link']}>Лидеры</Link>
           <Link to="/profile" className={s['nav-link']}>Профиль</Link>
-          {isAdmin && (
+          {(isAdmin || isModerator) && (
             <Link translate='no' to="/report" className={s['nav-link']}>
               <i className={s['nav-link']}></i> Фото-отчеты
             </Link>

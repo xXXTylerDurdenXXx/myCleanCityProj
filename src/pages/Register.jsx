@@ -1,40 +1,40 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import api from '../api/axios';
 
 const Register = () => {
-  const [username, setUsername] = useState('');
-  const [birthDate, setBirthDate] = useState('');
+  const [name, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const navigate = useNavigate();
 
   const handleRegister = async (e) => {
     e.preventDefault();
+    setLoading(true);
     
-    const data = { username, birthDate, email, password };
+    const data = { name, email, password };
 
     try {
-      const response = await fetch('/api/auth/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(data)
-      });
+      const response = await api.post('/auth/register', data);
 
-      const result = await response.json();
-
-      if (response.ok) {
+      if (response.status === 200 || response.status === 201) {
         alert("Регистрация успешна!");
-        localStorage.setItem('token', result.token); 
+        
+        if (response.data.token) {
+          localStorage.setItem('token', response.data.token);
+        }
+        
         navigate('/map'); 
-      } else {
-        alert("Ошибка: " + (result.message || "Не удалось зарегистрироваться"));
       }
     } catch (error) {
-      console.error("Ошибка сети:", error);
-      alert("Проблема с подключением к серверу");
+      console.error("Ошибка при регистрации:", error);
+      
+      const message = error.response?.data?.message || "Не удалось зарегистрироваться. Проверьте данные.";
+      alert("Ошибка: " + message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -49,23 +49,9 @@ const Register = () => {
             type="text" 
             placeholder="Введите имя пользователя" 
             required 
-            value={username}
+            value={name}
             onChange={(e) => setUsername(e.target.value)}
           />
-        </div>
-
-        <div className="input-group">
-          <img src="/Resources/calendar.png" alt="Дата рождения" />
-          <input 
-            type="date" 
-            title="Дата рождения" 
-            required 
-            value={birthDate}
-            onChange={(e) => setBirthDate(e.target.value)}
-          />
-          <small style={{ display: 'block', color: '#1e3a8a', fontSize: '10px', textAlign: 'left', marginLeft: '35px' }}>
-            Дата рождения
-          </small>
         </div>
 
         <div className="input-group">
