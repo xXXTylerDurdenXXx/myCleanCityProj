@@ -57,10 +57,13 @@ const MapPage = () => {
     async function savePointOnServer(map, coords, type, imageFile) {
       try {
         const formData = new FormData();
+        // Костыль: превращаем в строку и меняем точку на запятую
+        const latWithComma = coords[0].toString().replace('.', ',');
+        const lonWithComma = coords[1].toString().replace('.', ',');
         
         formData.append('Name', `Точка: ${type}`);
-        formData.append('Latitude', coords[0]);
-        formData.append('Longitude', coords[1]);
+        formData.append('Latitude', latWithComma);
+        formData.append('Longitude', lonWithComma);
         formData.append('Address', 'Адрес из геокодера или промпта');
       
         if (imageFile) {
