@@ -1,34 +1,31 @@
 import React, { useState, useEffect } from 'react';
 import Header from '../components/Header';
 import s from './Leaderboard.module.css';
+import api from '../api/axios';
 
 const Leaderboard = () => {
   const [leaders, setLeaders] = useState([]);
-  const [filter, setFilter] = useState('day'); 
+  const [filter, setFilter] = useState('month'); 
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchLeaders = async () => {
       setLoading(true);
       try {
+        const response = await api.get('/user/leaderboard');
+        
+        // Мапим данные, если ключи в DTO (Username/Points) отличаются от тех, что были в моках
+        const data = response.data.map((user, index) => ({
+          id: index, // Используем индекс как временный id
+          name: user.username, 
+          totalPoints: user.points 
+        }));
 
-        const mockData = [
-          { id: 1, name: "Иван", totalPoints: 1250 },
-          { id: 2, name: "Tyler Durden", totalPoints: 1100 },
-          { id: 3, name: "Анна", totalPoints: 950 },
-          { id: 4, name: "Дмитрий Песков", totalPoints: 800 },
-          { id: 5, name: "Елена му", totalPoints: 720 },
-        ];
-        
-        /* Когда бэкенд оживет:
-        const response = await fetch(`/api/leaderboard?period=${filter}`);
-        const data = await response.json();
         setLeaders(data);
-        */
-        
-        setLeaders(mockData);
+
       } catch (error) {
         console.error("Ошибка загрузки лидеров:", error);
+        setLeaders([]);
       } finally {
         setLoading(false);
       }
@@ -71,7 +68,9 @@ const Leaderboard = () => {
                     <tr key={user.id} className={rowClass}>
                       <td className={s.rankCol}>{rank}</td>
                       <td>{user.name || "Аноним"}</td>
-                      <td className={s.pointsCol}>{user.totalPoints || 0}</td>
+                      <td className={s.pointsCol}>
+                        <strong>{user.totalPoints.toLocaleString()}</strong>
+                      </td>
                     </tr>
                   );
                 })

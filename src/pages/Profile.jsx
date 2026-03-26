@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
+import api from '../api/axios';
 import s from './Profile.module.css';
 
 const Profile = () => {
@@ -9,31 +11,73 @@ const Profile = () => {
     points: 0,
     avatar: '/Resources/default-avatar.png'
   });
+  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+
+  // Чистый URL сервера без /api на конце
+  const getBaseUrl = () => {
+    const url = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+    return url.replace(/\/api$/, ''); // Убираем /api, если он там есть
+  };
 
   useEffect(() => {
     const fetchUser = async () => {
-      const mockUser = {
-        name: 'Tyler Durden',
-        email: 'tyler@fightclub.com',
-        points: 450,
-        avatar: '/Resources/default-avatar.png'
-      };
-      setUser(mockUser);
+      try {
+        const response = await api.get('/mobile/profile');
+        const data = response.data;
+        
+        const baseUrl = getBaseUrl();
+        setUser({
+          name: data.name,
+          email: data.email,
+          points: data.totalPoints,
+          // Если photoUrl пустой, оставляем дефолт. 
+          avatar: data.photoUrl 
+            ? `${baseUrl}/${data.photoUrl}` 
+            : '/Resources/default-avatar.png'
+        });
+      } catch (error) {
+        console.error("Ошибка загрузки профиля:", error);
+        if (error.response?.status === 401) navigate('/'); // Если токен протух
+      } finally {
+        setLoading(false);
+      }
     };
 
     fetchUser();
-  }, []);
+  }, [navigate]);
+
+  const handleAvatarChange = async (e) =>{
+    const file = e.target.files[0];
+    if(!file) return;
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try{
+      const response = await api.post('/mobile/upload-avatar', formData,{
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      const baseUrl = getBaseUrl();
+      const newPhotoUrl = `${baseUrl}/${response.data.photoUrl}`;
+      setUser(prev => ({ ...prev, avatar: newPhotoUrl }));
+      alert("Фото обновлено!");
+    }catch(error){
+      console.error("Ошибка загрузки фото:", error);
+      alert("Не удалось загрузить фото");
+    }
+  };
 
   const handleSave = () => {
-    console.log("Данные сохранены:", user);
-    alert("Профиль успешно обновлен!");
+   alert("Имя изменено локально. Для сохранения в БД нужен PUT метод на бэке!");
   };
 
   const handleLogout = (e) => {
     e.preventDefault();
-    console.log("Выход из системы...");
-
+    localStorage.removeItem('token'); // Чистим токен
+    navigate('/');
   };
+  if (loading) return <div className={s.profilePage}><Header /><p style={{textAlign:'center', marginTop:'50px'}}>Загрузка...</p></div>;
 
   return (
     <div className={s.profilePage}>
@@ -41,9 +85,15 @@ const Profile = () => {
       <div className={s.profileContainer}>
         <div className={s.profileCard}>
           <div className={s.profileLeft}>
-            <img src={user.avatar} alt="User Avatar" />
+            <img src={user.avatar} alt="User Avatar" onError={(e) => e.target.src = '/Resources/default-avatar.png'} />
             <label className={s.uploadLabel}>
               <i className='bx bx-upload'></i> Загрузить фото
+              <input
+                type="file" 
+                  accept="image/*" 
+                  onChange={handleAvatarChange} 
+                  style={{ display: 'none' }}
+              />
             </label>
           </div>
 
