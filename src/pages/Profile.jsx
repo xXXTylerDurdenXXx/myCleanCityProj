@@ -68,8 +68,23 @@ const Profile = () => {
     }
   };
 
-  const handleSave = () => {
-   alert("Имя изменено локально. Для сохранения в БД нужен PUT метод на бэке!");
+  const handleSave = async () => {
+   try {
+      const response = await api.post('/mobile/change-nickname', {
+        newNickname: user.name
+      });
+
+      if (response.data.isSuccess) {
+        alert(response.data.message);
+        // Обновляем локальное состояние на случай, если бэк как-то отформатировал имя
+        setUser(prev => ({ ...prev, name: response.data.newNickname }));
+      }
+    } catch (error) {
+      console.error("Ошибка при смене имени:", error);
+      // Выводим сообщение об ошибке с бэкенда (например, "Никнейм занят")
+      const errorMessage = error.response?.data?.message || "Ошибка сервера";
+      alert(errorMessage);
+    }
   };
 
   const handleLogout = (e) => {

@@ -1,39 +1,72 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Header from '../components/Header';
 import s from './AdminPanel.module.css';
+import api from '../api/axios';
 
 const AdminPanel = () => {
     const [activeTab, setActiveTab] = useState('users');
+    const [users, setUsers] = useState([]); 
+    const [reports, setReports] = useState([]); 
+    const [loading, setLoading] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [editingItem, setEditingItem] = useState(null);
 
-    const users = [
-        { id: 1, name: "Иван Иванов", email: "ivan@mail.ru", role: "User", points: 150 },
-        { id: 2, name: "Tyler Durden", email: "fight@club.com", role: "Admin", points: 999 },
-    ];
+    const fetchUsers = async () => {
+        setLoading(true);
+        try {
+            const response = await api.get('/user/admin/all');
+            setUsers(response.data);
+        } catch (error) {
+            console.error("Ошибка загрузки пользователей:", error);
+            if(error.response?.status === 403) alert("У вас нет прав администратора");
+        } finally {
+            setLoading(false);
+        }
+    };
 
-    const reports = [
-        { id: 101, user: "Иван Иванов", type: "Пластик", status: "На проверке", img: "https://via.placeholder.com/100" },
-    ];
+    useEffect(() => {
+        if (activeTab === 'users') {
+            fetchUsers();
+        }
+    }, [activeTab]);
+
     const handleEdit = (item) => {
     setEditingItem({ ...item });
     setIsEditModalOpen(true);
     };
 
-    const handleDelete = (id) => {
-    if(window.confirm("Удалить пользователя?")) {
-        setUsers(users.filter(user => user.id !== id));
-    }
+    const handleDelete = async (id, name) => {
+        if (window.confirm(`Вы уверены, что хотите удалить пользователя ${name}?`)) {
+            try {
+                await api.delete(`/user/admin/delete/${id}`);
+                setUsers(users.filter(u => u.id !== id));
+                alert("Пользователь удален");
+            } catch (error) {
+                alert("Ошибка при удалении");
+            }
+        }
     };
-    const handleSave = (updatedUser) => {
-    // Обновляем список пользователей локально
-    const updatedList = users.map(u => u.id === updatedUser.id ? updatedUser : u);
-    setUsers(updatedList);
-    
-    setIsEditModalOpen(false);
-    alert("Данные пользователя обновлены!");
-    };
+    const handleSave = async (updatedUser) => {
+        try {
+            // Мапим данные под твою модель User на бэкенде
+            const payload = {
+                name: updatedUser.name,
+                email: updatedUser.email,
+                role: updatedUser.role,
+                totalPoints: updatedUser.totalPoints 
+            };
 
+            await api.put(`/user/admin/update/${updatedUser.id}`, payload);
+            
+            // Обновляем список локально, чтобы не делать лишний запрос
+            setUsers(users.map(u => u.id === updatedUser.id ? { ...u, ...payload } : u));
+            setIsEditModalOpen(false);
+            alert("Данные обновлены!");
+        } catch (error) {
+            console.error(error);
+            alert("Ошибка при сохранении");
+        }
+    };
 
 
     return(
@@ -75,7 +108,7 @@ const AdminPanel = () => {
                                             <td>{u.name}</td>
                                             <td>{u.email}</td>
                                             <td><span className={s.badge}>{u.role}</span></td>
-                                            <td>{u.points}</td>
+                                            <td>{u.totalPoints}</td>
                                             <td>
                                                 <button className={s.editBtn} onClick={() => handleEdit(u)}>
                                                     <i className='bx bx-edit'></i>
@@ -190,7 +223,7 @@ const AdminPanel = () => {
                             <input 
                                 type="number" 
                                 value={editingItem.points} 
-                                onChange={(e) => setEditingItem({...editingItem, points: Number(e.target.value)})}
+                                onChange={(e) => setEditingItem({...editingItem, totalPoints: Number(e.target.value)})}
                             />
                         </div>
 
