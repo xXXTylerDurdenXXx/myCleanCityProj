@@ -1,0 +1,137 @@
+.chatWrapper {
+    width: 100%;
+    max-width: 900px;
+    height: 600px;
+    background: #fff;
+    display: flex;
+    flex-direction: column;
+    border: 1px solid #eee;
+    border-radius: 12px;
+    margin: 20px auto;
+}
+
+.chatHeader {
+    padding: 15px 20px;
+    border-bottom: 1px solid #f0f0f0;
+    display: flex;
+    justify-content: space-between;
+    font-weight: 600;
+}
+
+.chatClose {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+}
+
+.chatMessages {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
+    background-color: #fafafa;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.message {
+    display: flex;
+    gap: 10px;
+    max-width: 50%;
+}
+
+.bot {
+    align-self: flex-start;
+}
+
+.user {
+    align-self: flex-end;
+}
+
+.botAvatar img {
+    width: 50%; 
+    height: 50%;
+    object-fit: contain; 
+}
+
+.messageContent {
+    background: #f1f1f1;
+    padding: 10px 15px;
+    display: flex; 
+    flex-direction: column;
+    width: fit-content; 
+    max-width: 100%; 
+    
+    align-self: flex-start; 
+}
+
+.bot .messageContent {
+    background: #f1f1f1;
+    border-radius: 12px; 
+    width: fit-content;
+    align-self: flex-start;
+}
+
+.user .messageContent {
+    background: #e8f5e9;
+    border-radius: 12px 12px 4px 12px;
+}
+
+.messageContent p {
+    margin: 0;
+    line-height: 1.4;
+}
+
+.time {
+    font-size: 10px;
+    color: #999;
+    margin-top: 4px;
+    display: block;
+}
+
+.chatCategories {
+    display: flex;
+    gap: 8px;
+    padding: 10px 20px;
+    overflow-x: auto;
+}
+
+.categoryPill {
+    padding: 8px 15px;
+    border: 1px solid #ccc;
+    border-radius: 20px;
+    background: white;
+    cursor: pointer;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    white-space: nowrap;
+}
+
+.chatInputArea {
+    padding: 15px 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-top: 1px solid #eee;
+}
+
+.chatInputArea input {
+    flex: 1;
+    border: none;
+    outline: none;
+}
+
+.attachBtn, .sendBtn {
+    background: none;
+    border: none;
+    font-size: 20px;
+    color: #777;
+    cursor: pointer;
+}
+
+.sendBtn {
+    color: #2ecc71;
+}

@@ -8,6 +8,7 @@ import Leaderboard from './pages/Leaderboard';
 import Profile from './pages/Profile';
 import AdminPanel from './pages/AdminPanel';
 import ReportReview from './pages/ReportReview';
+import SupportChat from './pages/SupportChat';
 import './App.css';
 
 const App = () => {
@@ -40,6 +41,7 @@ const App = () => {
           <Route path='/profile' element={<Profile/>} />
           <Route path='/admin' element={isAdmin ? <AdminPanel /> : <Navigate to="/map" />} />
           <Route path='/report' element={isAdmin || isModerator ? <ReportReview /> : <Navigate to="/map" />} />
+          <Route path='/support' element={<SupportChat/>} />
 
 
           <Route path="*" element={<Navigate to="/" />} />
