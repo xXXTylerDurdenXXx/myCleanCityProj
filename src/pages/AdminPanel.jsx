@@ -8,6 +8,7 @@ const AdminPanel = () => {
     const [users, setUsers] = useState([]); 
     const [reports, setReports] = useState([]); 
     const [loading, setLoading] = useState(false);
+    const [points, setPoints] = useState([]);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [editingItem, setEditingItem] = useState(null);
 
@@ -23,11 +24,38 @@ const AdminPanel = () => {
             setLoading(false);
         }
     };
+    const fetchPoints = async () => {
+        setLoading(true);
+        try {
+            const response = await api.get('/DisposalPoints'); 
+            setPoints(response.data);
+        } catch (error) {
+            console.error("Ошибка загрузки точек:", error);
+        } finally {
+            setLoading(false);
+        }
+    };
+    const fetchReports = async () => {
+        setLoading(true);
+        try {
+            const response = await api.get('/Request/alladmin'); 
+            setReports(response.data);
+        } catch (error) {
+            console.error("Ошибка загрузки отчетов:", error);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     useEffect(() => {
         if (activeTab === 'users') {
             fetchUsers();
+        }else if (activeTab === 'points'){
+            fetchPoints();
+        }else if (activeTab === 'reports') {
+        fetchReports();
         }
+        
     }, [activeTab]);
 
     const handleEdit = (item) => {
@@ -46,6 +74,30 @@ const AdminPanel = () => {
             }
         }
     };
+
+    const handleDeletePoint = async (id) => {
+        if (window.confirm(`Удалить точку #${id}?`)) {
+            try {
+                await api.delete(`/DisposalPoints/${id}`); 
+                setPoints(points.filter(p => p.id !== id));
+                alert("Точка удалена");
+            } catch (error) {
+                alert("Ошибка при удалении точки");
+            }
+        }
+    };
+    const handleDeleteReport = async (id) => {
+        if (window.confirm(`Вы уверены, что хотите удалить отчет #${id}?`)) {
+            try {
+                await api.delete(`/Request/delete/${id}`); 
+                setReports(reports.filter(r => r.id !== id));
+                alert("Отчет удален");
+            } catch (error) {
+                alert("Ошибка при удалении");
+            }
+        }
+    };
+
     const handleSave = async (updatedUser) => {
         try {
             // Мапим данные под твою модель User на бэкенде
@@ -130,15 +182,38 @@ const AdminPanel = () => {
                         <table className={s.table}>
                             <thead>
                                 <tr>
-                                    <th>ID</th>
+                                    <th>Фото</th>
                                     <th>Тип</th>
+                                    <th>Адресс</th>
                                     <th>Координаты</th>
-                                    <th>Адрес</th>
                                     <th>Действия</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                
+                                {points.map(p => (
+                                    <tr key={p.id}>
+                                        <td>
+                                            {p.photoUrl ? (
+                                                <img src={p.photoUrl} alt="point" className={s.tableImg} style={{width: '50px', height: '50px', objectFit: 'cover', borderRadius: '4px'}} />
+                                            ) : 'Нет фото'}
+                                        </td>
+                                        <td>{p.name}</td>
+                                        <td>{p.address}</td>
+                                        <td>
+                                            <small>{p.latitude.toFixed(4)}, {p.longitude.toFixed(4)}</small>
+                                        </td>
+                                        <td>
+                                            {p.wasteTypes && p.wasteTypes.map((type, idx) => (
+                                                <span key={idx} className={s.badge} style={{marginRight: '4px'}}>{type}</span>
+                                            ))}
+                                        </td>
+                                        <td>
+                                            <button className={s.deleteBtn} onClick={() => handleDeletePoint(p.id)}>
+                                                <i className='bx bx-trash'></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))}
                             </tbody>
                         </table>
                     </div>
@@ -153,8 +228,10 @@ const AdminPanel = () => {
                                 <tr>
                                     <th>Фото</th>
                                     <th>От кого</th>
+                                    <th>Вес</th>
                                     <th>Тип</th>
                                     <th>Статус</th>
+                                    <th>Кометарий</th>
                                     <th>Действия</th>
                                 </tr>
                             </thead>
@@ -162,24 +239,31 @@ const AdminPanel = () => {
                                 {reports.map(r => (
                                     <tr key={r.id}>
                                         <td>
-                                            <img src={r.img} alt="report" className={s.tableImg} />
+                                            {r.photoUrl ? (
+                                                <img src={r.photoUrl} alt="report" className={s.tableImg} style={{width: '50px', borderRadius: '4px'}} />
+                                            ) : 'Нет фото'}
                                         </td>
-                                        <td>{r.user}</td>
-                                        <td>{r.type}</td>
+                                        <td>{r.userName}</td>
+                                        <td>{r.wasteTypeName}</td>
+                                        <td>{r.weight}</td>
                                         <td>
-                                            <span className={r.status === 'Принят' ? s.statusOk : s.statusWait}>
+                                            <span className={r.status === 'Accepted' || r.status === 'Принят' ? s.statusOk : s.statusWait}>
                                                 {r.status}
                                             </span>
                                         </td>
+                                        <td style={{maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'}}>
+                                            {r.comment || "-"}
+                                        </td>
                                         <td>
-                                            <button className={s.deleteBtn} onClick={() => handleDelete(u.id)}>
-                                                    <i className='bx bx-trash'></i>
+                                            <button className={s.deleteBtn} onClick={() => handleDeleteReport(r.id)}>
+                                                <i className='bx bx-trash'></i>
                                             </button>
                                         </td>
                                     </tr>
                                 ))}
                             </tbody>
                         </table>
+                        {reports.length === 0 && !loading && <p>Отчетов пока нет</p>}
                     </div>
                 )}
                 </main>

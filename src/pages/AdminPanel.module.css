@@ -156,8 +156,9 @@
     gap: 5px;
 }
 
+
 .editBtn { color: #1e90ff; background: none; border: none; cursor: pointer; font-size: 20px; }
-.deleteBtn { color: #ef4444; background: none; border: none; cursor: pointer; font-size: 20px; margin-left: 10px; }
+.deleteBtn { color: #ef4444; background: none; border: none; cursor: pointer; font-size: 20px; margin-left: 5px; }
 
 /* Отчеты */
 .reportsGrid {
