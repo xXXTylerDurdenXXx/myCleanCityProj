@@ -7,7 +7,10 @@ const MapPage = () => {
   const yMap = useRef(null);
   const [selectedPoint, setSelectedPoint] = useState(null);
   const [isEditing, setIsEditing] = useState(false); 
+  const [isCreating, setIsCreating] = useState(false);
+  const [wasteTypes, setWasteTypes] = useState([]);
   const [editData, setEditData] = useState({});
+  const [newCoords, setNewCoords] = useState(null);
   const token = localStorage.getItem('token');
 
   const parseJwt = (token) => {
@@ -23,7 +26,16 @@ const MapPage = () => {
   const isAdmin = (user?.role === "Admin" || user?.role === "Moderator");
 
   useEffect(() => {
-    let mapInstance = null;
+    const fetchWasteTypes = async () => {
+      try {
+        const res = await api.get('/disposalpoints/waste-types-list'); 
+        setWasteTypes(res.data);
+      } catch (e) { console.error("Ошибка загрузки типов:", e); }
+    };
+    fetchWasteTypes();
+  }, []);
+
+  useEffect(() => {
     if (window.ymaps) {
       window.ymaps.ready(initMap);
     }
@@ -44,33 +56,34 @@ const MapPage = () => {
       if (isAdmin) {
         map.events.add('dblclick', async (e) => {
           const coords = e.get('coords');
+          let foundAddress = "Адрес не определен";
+
           try {
-          // 1. Спрашиваем у Яндекса адрес по координатам
-          const res = await window.ymaps.geocode(coords);
-          const firstGeoObject = res.geoObjects.get(0);
-          // Получаем строку адреса
-          const foundAddress = firstGeoObject ? firstGeoObject.getAddressLine() : "Адрес не определен";
-          const type = prompt(`Адрес: ${foundAddress}\nВведите тип (Пластик, Бумага):`, "Общий");
-          
-          if (type) {
-            // 3. Отправляем на сервер с реальным адресом
-            await savePointOnServer(map, coords, type, foundAddress);
+            const res = await window.ymaps.geocode(coords);
+            const firstGeoObject = res.geoObjects.get(0);
+            if (firstGeoObject) foundAddress = firstGeoObject.getAddressLine();
+          } catch (err) {
+            console.warn("Геокодирование недоступно:", err);
           }
-        } catch (err) {
-          console.error("Ошибка геокодирования:", err);
-          // Если геокодер упал, всё равно даем создать точку
-          const type = prompt("Не удалось определить адрес. Тип точки:", "Общий");
-          if (type) await savePointOnServer(map, coords, type, "Адрес не определен");
-        }
-      });
+
+          setNewCoords(coords);
+          setIsCreating(true);
+          setIsEditing(true);
+          const initialWasteTypeId = wasteTypes.length > 0 ? wasteTypes[0].id : 0;
+
+          const initialData = {
+            name: "Новая точка",
+            address: foundAddress,
+            wasteTypeId: initialWasteTypeId
+          };
+          
+          setSelectedPoint({ ...initialData, id: null, photoUrl: null });
+          setEditData(initialData);
+          
+        });
       }
     }
-    return () => {
-    if (mapInstance) {
-      mapInstance.destroy(); 
-    }
-    };
-  }, [isAdmin]);
+  }, [isAdmin, wasteTypes]);
 
   
   const fetchPoints = async (map) => {
@@ -81,16 +94,25 @@ const MapPage = () => {
     } catch (e) { console.error(e); }
   };
 
-  const savePointOnServer = async (map, coords, type, address = "") => {
+  const handleSaveButtonClick = async () => {
+    if (isCreating) {
+      await savePointOnServer(yMap.current, newCoords, editData.address);
+    } else {
+      await handleUpdatePoint();
+    }
+  };
+
+  const savePointOnServer = async (map, coords, address = "") => {
     try {
     const formData = new FormData();
         // Костыль: превращаем в строку и меняем точку на запятую
         const latWithComma = coords[0].toString().replace('.', ',');
         const lonWithComma = coords[1].toString().replace('.', ',');
         
-        formData.append('Name', `Точка: ${type}`);
+        formData.append('Name', editData.name || "Точка");
         formData.append('Latitude', latWithComma);
         formData.append('Longitude', lonWithComma);
+        formData.append('WasteTypeId', editData.wasteTypeId);
         formData.append('Address', address);
       
         
@@ -104,7 +126,11 @@ const MapPage = () => {
         if (response.status === 201) {
           addPlacemark(map, response.data);
           alert("Точка и фото успешно сохранены!");
-        }
+          setIsCreating(false);
+          setIsEditing(false);
+          setSelectedPoint(null);
+          fetchPoints(map);
+          }
       } catch (e) {
         console.error("Ошибка сохранения:", e.response?.data || e.message);
         alert("Не удалось сохранить точку с фото");
@@ -112,8 +138,6 @@ const MapPage = () => {
     }
 
   const addPlacemark = (map, point) => {
-    const typesText = point.wasteTypes?.length > 0 ? point.wasteTypes.join(', ') : "Общий";
-
     const placemark = new window.ymaps.Placemark([point.latitude, point.longitude], {
       hintContent: point.name
     }, {
@@ -124,8 +148,9 @@ const MapPage = () => {
     });
 
     placemark.events.add('click', () => {
-      setSelectedPoint({ ...point, displayTypes: typesText });
-      setIsEditing(false); 
+      setSelectedPoint(point);
+      setIsEditing(false);
+      setIsCreating(false);
     });
 
     map.geoObjects.add(placemark);
@@ -133,41 +158,57 @@ const MapPage = () => {
 
   // ФУНКЦИЯ ОБНОВЛЕНИЯ
   const handleUpdatePoint = async () => {
-    try {
-      await api.put(`/disposalpoints/${selectedPoint.id}`, {
-        id: selectedPoint.id,
-        name: editData.name,
-        address: editData.address,
-        latitude: selectedPoint.latitude,
-        longitude: selectedPoint.longitude
-      });
+  try {
+    const dataToSend = {
+      id: selectedPoint.id,
+      name: editData.name,
+      address: editData.address,
+      latitude: selectedPoint.latitude,
+      longitude: selectedPoint.longitude,
+      disposalPointWasteTypes: (editData.wasteTypeIds || []).map(id => ({
+        wasteTypeId: id
+      }))
+    };
 
-      alert("Данные обновлены!");
-      setIsEditing(false);
-      setSelectedPoint({ ...selectedPoint, name: editData.name, address: editData.address });
-      fetchPoints(yMap.current); // Обновляем карту
-    } catch (e) {
-      console.error(e);
-      alert("Ошибка при обновлении");
-    }
+    console.log("Отправка на PUT:", dataToSend);
+    await api.put(`/disposalpoints/${selectedPoint.id}`, dataToSend);
+
+    alert("Данные обновлены!");
+    setIsEditing(false);
+    fetchPoints(yMap.current); 
+    
+    // Сбрасываем выбранную точку, чтобы данные подтянулись заново
+    setSelectedPoint(null); 
+  } catch (e) {
+    console.error("Детали ошибки 400:", e.response?.data);
+    alert("Ошибка 400: проверьте правильность заполнения полей");
+  }
+  };
+  const closeSidebar = () => {
+    setSelectedPoint(null);
+    setIsEditing(false);
+    setIsCreating(false);
+    setEditData({});
+  };
+  const startEditing = () => {
+  const currentIds = selectedPoint.wasteTypesData?.map(w => w.id) || []; 
+
+    setEditData({ 
+        name: selectedPoint.name, 
+        address: selectedPoint.address,
+        wasteTypeIds: currentIds.length > 0 ? currentIds : [] 
+    });
+    setIsEditing(true);
   };
 
   const handleDeletePoint = async () => {
-  if (!window.confirm(`Удалить точку "${selectedPoint.name}"?`)) return;
-  
-  try {
-    await api.delete(`/disposalPoints/${selectedPoint.id}`);
-    alert("Точка удалена");
-    setSelectedPoint(null); // Закрываем сайдбар
-    fetchPoints(yMap.current); // Перерисовываем карту
-  } catch (e) {
-    alert("Ошибка при удалении");
-  }
-  };
-
-  const startEditing = () => {
-    setEditData({ name: selectedPoint.name, address: selectedPoint.address });
-    setIsEditing(true);
+    if (!window.confirm(`Удалить точку "${selectedPoint.name}"?`)) return;
+    try {
+      await api.delete(`/disposalPoints/${selectedPoint.id}`);
+      alert("Точка удалена");
+      closeSidebar();
+      fetchPoints(yMap.current);
+    } catch (e) { alert("Ошибка при удалении"); }
   };
 
   const handlePhotoChange = async (e) => {
@@ -189,6 +230,7 @@ const MapPage = () => {
     alert("Ошибка при загрузке фото");
   }
 };
+ const displayNames = selectedPoint?.wasteTypeNames?.join(", ") || "Не указаны";
 
   return (
   <div className="map-page-wrapper"> 
@@ -196,35 +238,38 @@ const MapPage = () => {
       <div className="map-container">
         <div id="map" ref={mapRef}></div>
 
-        {selectedPoint && ( 
-          <div className="sidebar">
-            <button className="close-btn" onClick={() => setSelectedPoint(null)}>
-              <i className='bx bx-x'></i>
-            </button>
-            
-            <img src={selectedPoint.photoUrl || '/Resources/point.png'} alt="point" className="sidebar-img" />
-            
-            <div className="sidebar-content">
-              {isEditing ? (
-                /* ОКНО РЕДАКТИРОВАНИЯ */
-                <div className="edit-form">
-                {/* Редактирование фото */}
-                <div className="edit-photo-section" style={{ marginBottom: '15px', textAlign: 'center' }}>
-                  <img src={selectedPoint.photoUrl || '/Resources/point.png'} alt="preview" style={{ width: '100px', borderRadius: '8px' }} />
-                  <input 
-                    type="file" 
-                    id="photoInput" 
-                    hidden 
-                    onChange={handlePhotoChange} 
-                    accept="image/*"
-                  />
-                  <button 
-                    onClick={() => document.getElementById('photoInput').click()}
-                    style={{ display: 'block', margin: '10px auto', fontSize: '12px' }}
-                  >
-                    Сменить фото
-                  </button>
-                </div>
+        {selectedPoint && (
+        <div className="sidebar">
+          <button className="close-btn" onClick={closeSidebar}>
+            <i className='bx bx-x'></i>
+          </button>
+
+          <img src={selectedPoint.photoUrl || '/Resources/point.png'} alt="point" className="sidebar-img" />
+
+          <div className="sidebar-content">
+            {isEditing ? (
+              /* ОКНО РЕДАКТИРОВАНИЯ И СОЗДАНИЯ */
+              <div className="edit-form">
+                
+                {/* ФОТО: Показываем только если точка УЖЕ существует (не в режиме создания) */}
+                {!isCreating && (
+                  <div className="edit-photo-section" style={{ marginBottom: '15px', textAlign: 'center' }}>
+                    <img src={selectedPoint.photoUrl || '/Resources/point.png'} alt="preview" style={{ width: '100px', borderRadius: '8px' }} />
+                    <input 
+                      type="file" 
+                      id="photoInput" 
+                      hidden 
+                      onChange={handlePhotoChange} 
+                      accept="image/*"
+                    />
+                    <button 
+                      onClick={() => document.getElementById('photoInput').click()}
+                      style={{ display: 'block', margin: '10px auto', fontSize: '12px' }}
+                    >
+                      Сменить фото
+                    </button>
+                  </div>
+                )}
 
                 <label>Название:</label>
                 <input 
@@ -232,54 +277,74 @@ const MapPage = () => {
                   value={editData.name} 
                   onChange={(e) => setEditData({...editData, name: e.target.value})} 
                 />
+                
                 <label>Адрес:</label>
                 <textarea 
                   value={editData.address} 
                   onChange={(e) => setEditData({...editData, address: e.target.value})} 
                 />
-                
-                <button className="btn-save" onClick={handleUpdatePoint}>Сохранить</button>
-                
-                {/* Кнопка удаления */}
-                <button 
-                  className="btn-delete" 
-                  onClick={handleDeletePoint}
-                  style={{ backgroundColor: '#e74c3c', color: 'white', marginTop: '10px', width: '100%', padding: '10px', borderRadius: '8px', border: 'none' }}
+                <label>Типы отходов (удерживайте Ctrl для выбора нескольких):</label>
+                <select 
+                  multiple={true} // Разрешаем выбирать несколько
+                  style={{ height: '100px' }} // Чтобы было удобно выбирать
+                  value={editData.wasteTypeIds || []}
+                  onChange={(e) => {
+                    // Собираем все выбранные ID в массив
+                    const selectedOptions = Array.from(e.target.selectedOptions).map(opt => opt.value);
+                    setEditData({...editData, wasteTypeIds: selectedOptions});
+                  }}
                 >
-                  Удалить точку
+                  {wasteTypes.map(t => (
+                    <option key={t.id} value={t.id}>{t.name}</option>
+                  ))}
+                </select>
+                {/* Кнопка "Сохранить" теперь универсальная */}
+                <button className="btn-save" onClick={handleSaveButtonClick}>
+                  {isCreating ? "Создать точку" : "Сохранить изменения"}
                 </button>
                 
-                <button className="btn-cancel" onClick={() => setIsEditing(false)} style={{ width: '100%', marginTop: '5px' }}>
+                {/* УДАЛЕНИЕ: Показываем кнопку только если мы редактируем существующую точку */}
+                {!isCreating && (
+                  <button 
+                    className="btn-delete" 
+                    onClick={handleDeletePoint}
+                    style={{ backgroundColor: '#e74c3c', color: 'white', marginTop: '10px', width: '100%', padding: '10px', borderRadius: '8px', border: 'none' }}
+                  >
+                    Удалить точку
+                  </button>
+                )}
+                
+                <button className="btn-cancel" onClick={() => isCreating ? closeSidebar() : setIsEditing(false)} style={{ width: '100%', marginTop: '5px' }}>
                   Отмена
                 </button>
               </div>
-              ) : (
-                /* ОКНО ИНФОРМАЦИИ */
-                <>
-                  <h2 className="sidebar-title">{selectedPoint.name}</h2>
-                  <p className="sidebar-address">
-                    <i className='bx bx-map'></i> {selectedPoint.address || 'Адрес не указан'}
-                  </p>
-                  <p><strong>Типы:</strong> {selectedPoint.displayTypes}</p>
-                  
-                  <div className="points-pill">
-                    <i className='bx bxs-zap'></i> +{selectedPoint.points || 0} баллов
-                  </div>
+            ) : (
+              /* ОКНО ИНФОРМАЦИИ (ПРОСМОТР) */
+              <>
+                <h2 className="sidebar-title">{selectedPoint.name}</h2>
+                <p className="sidebar-address">
+                  <i className='bx bx-map'></i> {selectedPoint.address || 'Адрес не указан'}
+                </p>
+                <p><strong>Типы:</strong> {displayNames || 'Не указаны'}</p>
+                
+                <div className="points-pill">
+                  <i className='bx bxs-zap'></i> +{selectedPoint.points || 0} баллов
+                </div>
 
-                  {isAdmin && (
-                    <button className="btn-edit" onClick={startEditing} style={{ marginTop: '10px', backgroundColor: '#f39c12', color: 'white', width: '100%', padding: '10px', borderRadius: '8px', border: 'none', cursor: 'pointer' }}>
-                      <i className='bx bx-edit'></i> Редактировать точку
-                    </button>
-                  )}
-                  
-                  <button className="btn-save" style={{ width: '100%', marginTop: '10px' }}>
-                    Подтвердить сбор
+                {isAdmin && (
+                  <button className="btn-edit" onClick={startEditing} style={{ marginTop: '10px', backgroundColor: '#f39c12', color: 'white', width: '100%', padding: '10px', borderRadius: '8px', border: 'none', cursor: 'pointer' }}>
+                    <i className='bx bx-edit'></i> Редактировать точку
                   </button>
-                </>
-              )}
-            </div>
+                )}
+                
+                <button className="btn-save" style={{ width: '100%', marginTop: '10px' }}>
+                  Подтвердить сбор
+                </button>
+              </>
+            )}
           </div>
-        )}
+        </div>
+      )}
       </div>
     </div>
 );

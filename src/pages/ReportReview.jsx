@@ -29,30 +29,31 @@ const ReportReview = () => {
 
     const currentReport = reports[0];
 
-    const updateStatus = async (id, newStatus) => {
+    const updateStatus = async (id, newStatus, comment = "") => {
         try {
-            const response = await api.patch(`/api/Request/${id}/status`, {
-                newStatus: newStatus // 1 для Approved, 2 для Rejected (согласно Enum)
-            });
+        const response = await api.patch(`/api/Request/${id}/status`, {
             
-            alert(response.data.message);
-            // Удаляем текущий из списка локально
-            setReports(reports.slice(1));
-            setIsRejecting(false);
-            setRejectReason("");
+            newStatus: newStatus, // 1 для Approved, 2 для Rejected
+            response: comment     
+        });
+        
+        alert(response.data.message);
+        setReports(reports.slice(1)); // Убираем проверенный отчет
+        setIsRejecting(false);
+        setRejectReason("");
         } catch (error) {
             console.error(error);
-            alert("Ошибка при обновлении статуса: " + (error.response?.data || "неизвестная ошибка"));
+            alert(error.response?.data || "Ошибка сервера");
         }
     };
 
     const handleApprove = () => {
-        updateStatus(currentReport.id, 1); // Approved
+        updateStatus(currentReport.id, 1, "Спасибо! Отчет принят."); // Approved
     };
 
    const handleReject = () => {
         if (!rejectReason) return alert("Укажите причину отказа");
-        updateStatus(currentReport.id, 2); // Rejected
+        updateStatus(currentReport.id, 2, rejectReason); // Rejected
     };
     if (loading) return <div>Загрузка отчетов...</div>;
     return(
