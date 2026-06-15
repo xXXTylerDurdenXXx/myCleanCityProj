@@ -40,6 +40,18 @@ const Header = () => {
               <i className={s['nav-link']}></i> Фото-отчеты
             </Link>
           )}
+          {(isAdmin || isModerator) && (
+            <Link to="/supportHub" className={s['nav-link']}>
+              Поддержка
+            </Link>
+          )}
+          {!isAdmin && !isModerator && (
+            <Link to="/support" className={s['nav-link']}>
+              Поддержка
+            </Link>
+          )}
+
+
         </nav>
       </div>
     </header>

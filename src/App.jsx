@@ -9,6 +9,7 @@ import Profile from './pages/Profile';
 import AdminPanel from './pages/AdminPanel';
 import ReportReview from './pages/ReportReview';
 import SupportChat from './pages/SupportChat';
+import ModeratorChat from './pages/ModeratorChat';
 import './App.css';
 
 const App = () => {
@@ -27,7 +28,8 @@ const App = () => {
   const user = parseJwt(token);
   // ОБЪЯВЛЯЕМ isAdmin здесь:
   const isAdmin = user?.role === "Admin";
-  const isModerator = user?.role === "Moderator"
+  const isModerator = user?.role === "Moderator";
+  const isUser = user?.role === "User";
 
   return (
     <Router>
@@ -40,8 +42,9 @@ const App = () => {
           <Route path='/leaderboard' element={<Leaderboard/>} />
           <Route path='/profile' element={<Profile/>} />
           <Route path='/admin' element={isAdmin ? <AdminPanel /> : <Navigate to="/map" />} />
+          <Route path='/supportHub' element={isAdmin || isModerator ? <ModeratorChat /> : <Navigate to="/map" /> } />
           <Route path='/report' element={isAdmin || isModerator ? <ReportReview /> : <Navigate to="/map" />} />
-          <Route path='/support' element={<SupportChat/>} />
+          <Route path='/support' element={isUser ? <SupportChat/> : <Navigate to="/map" />} />
 
 
           <Route path="*" element={<Navigate to="/" />} />

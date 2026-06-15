@@ -132,6 +132,14 @@
     cursor: pointer;
 }
 
+.moderatorBanner {
+  background: #e8f5e9;
+  color: #2e7d32;
+  padding: 8px;
+  text-align: center;
+  font-size: 13px;
+}
+
 .sendBtn {
     color: #2ecc71;
 }

@@ -5,6 +5,8 @@ import api from '../api/axios';
 const MapPage = () => {
   const mapRef = useRef(null);
   const yMap = useRef(null);
+  const [points, setPoints] = useState([]);
+  const [selectedWasteType, setSelectedWasteType] = useState('');
   const [selectedPoint, setSelectedPoint] = useState(null);
   const [isEditing, setIsEditing] = useState(false); 
   const [isCreating, setIsCreating] = useState(false);
@@ -51,7 +53,7 @@ const MapPage = () => {
 
       yMap.current = map;
       map.behaviors.disable('doubleClickZoom');
-      fetchPoints(map);
+      await fetchPoints(map);
 
       if (isAdmin) {
         map.events.add('dblclick', async (e) => {
@@ -74,7 +76,7 @@ const MapPage = () => {
           const initialData = {
             name: "Новая точка",
             address: foundAddress,
-            wasteTypeId: initialWasteTypeId
+            wasteTypeIds: initialWasteTypeId ? [initialWasteTypeId] : []
           };
           
           setSelectedPoint({ ...initialData, id: null, photoUrl: null });
@@ -85,13 +87,31 @@ const MapPage = () => {
     }
   }, [isAdmin, wasteTypes]);
 
+  useEffect(() => {
+    if (!yMap.current) return;
+
+    const map = yMap.current;
+
+    map.geoObjects.removeAll();
+
+    const filteredPoints = selectedWasteType
+      ? points.filter(point =>
+          point.wasteTypeNames?.includes(selectedWasteType)
+        )
+      : points;
+
+    filteredPoints.forEach(point => addPlacemark(map, point));
+
+  }, [points, selectedWasteType]);
+
   
-  const fetchPoints = async (map) => {
+  const fetchPoints = async () => {
     try {
-      map.geoObjects.removeAll(); // Очистка перед перерисовкой
-      const response = await api.get('/disposalpoints'); 
-      response.data.forEach(p => addPlacemark(map, p));
-    } catch (e) { console.error(e); }
+      const response = await api.get('/disposalpoints');
+      setPoints(response.data);
+    } catch (e) {
+      console.error(e);
+    }
   };
 
   const handleSaveButtonClick = async () => {
@@ -105,14 +125,17 @@ const MapPage = () => {
   const savePointOnServer = async (map, coords, address = "") => {
     try {
     const formData = new FormData();
-        // Костыль: превращаем в строку и меняем точку на запятую
-        const latWithComma = coords[0].toString().replace('.', ',');
-        const lonWithComma = coords[1].toString().replace('.', ',');
         
         formData.append('Name', editData.name || "Точка");
-        formData.append('Latitude', latWithComma);
-        formData.append('Longitude', lonWithComma);
-        formData.append('WasteTypeId', editData.wasteTypeId);
+        formData.append('Latitude', coords[0]);
+        formData.append('Longitude', coords[1]);
+        (editData.wasteTypeIds || []).forEach((id, index) => {
+            formData.append(
+                `DisposalPointWasteTypes[${index}].WasteTypeId`,
+                id
+            );
+        });
+        console.log(editData.wasteTypeIds);
         formData.append('Address', address);
       
         
@@ -123,13 +146,13 @@ const MapPage = () => {
           }
         });
 
-        if (response.status === 201) {
-          addPlacemark(map, response.data);
+        if (response.status === 201 || response.status === 200) {
+          await fetchPoints();
           alert("Точка и фото успешно сохранены!");
           setIsCreating(false);
           setIsEditing(false);
           setSelectedPoint(null);
-          fetchPoints(map);
+          await fetchPoints();
           }
       } catch (e) {
         console.error("Ошибка сохранения:", e.response?.data || e.message);
@@ -175,7 +198,7 @@ const MapPage = () => {
 
     alert("Данные обновлены!");
     setIsEditing(false);
-    fetchPoints(yMap.current); 
+    await fetchPoints(); 
     
     // Сбрасываем выбранную точку, чтобы данные подтянулись заново
     setSelectedPoint(null); 
@@ -207,7 +230,7 @@ const MapPage = () => {
       await api.delete(`/disposalPoints/${selectedPoint.id}`);
       alert("Точка удалена");
       closeSidebar();
-      fetchPoints(yMap.current);
+      await fetchPoints();
     } catch (e) { alert("Ошибка при удалении"); }
   };
 
@@ -236,6 +259,20 @@ const MapPage = () => {
   <div className="map-page-wrapper"> 
       <Header />
       <div className="map-container">
+      <div className="map-filter">
+          <select
+            value={selectedWasteType}
+            onChange={(e) => setSelectedWasteType(e.target.value)}
+          >
+            <option value="">Все типы</option>
+
+            {wasteTypes.map(type => (
+              <option key={type.id} value={type.name}>
+                {type.name}
+              </option>
+            ))}
+          </select>
+        </div>
         <div id="map" ref={mapRef}></div>
 
         {selectedPoint && (
@@ -326,20 +363,12 @@ const MapPage = () => {
                   <i className='bx bx-map'></i> {selectedPoint.address || 'Адрес не указан'}
                 </p>
                 <p><strong>Типы:</strong> {displayNames || 'Не указаны'}</p>
-                
-                <div className="points-pill">
-                  <i className='bx bxs-zap'></i> +{selectedPoint.points || 0} баллов
-                </div>
-
                 {isAdmin && (
                   <button className="btn-edit" onClick={startEditing} style={{ marginTop: '10px', backgroundColor: '#f39c12', color: 'white', width: '100%', padding: '10px', borderRadius: '8px', border: 'none', cursor: 'pointer' }}>
                     <i className='bx bx-edit'></i> Редактировать точку
                   </button>
                 )}
                 
-                <button className="btn-save" style={{ width: '100%', marginTop: '10px' }}>
-                  Подтвердить сбор
-                </button>
               </>
             )}
           </div>

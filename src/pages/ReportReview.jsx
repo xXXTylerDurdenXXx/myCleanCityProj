@@ -9,19 +9,20 @@ const ReportReview = () => {
     const [rejectReason, setRejectReason] = useState("");
     const [isRejecting, setIsRejecting] = useState(false);
 
+    const API_BASE_URL = 'http://192.168.1.244:5000';
     const fetchPendingReports = async () => {
         setLoading(true);
         try {
-            const response = await api.get('/api/Request/alladmin');
+            const response = await api.get('/Request/alladmin');
             // Фильтруем только те, что в ожидании
-            const pending = response.data.filter(r => r.status === "Pending");
+            const pending = response.data.filter(r => r.status === "Pending" || r.Status === "Pending");
             setReports(pending);
         } catch (error) {
             console.error("Ошибка загрузки:", error);
         } finally {
             setLoading(false);
         }
-    };
+    };  
 
     useEffect(() => {
         fetchPendingReports();
@@ -31,7 +32,7 @@ const ReportReview = () => {
 
     const updateStatus = async (id, newStatus, comment = "") => {
         try {
-        const response = await api.patch(`/api/Request/${id}/status`, {
+        const response = await api.patch(`/Request/${id}/status`, {
             
             newStatus: newStatus, // 1 для Approved, 2 для Rejected
             response: comment     
@@ -48,12 +49,12 @@ const ReportReview = () => {
     };
 
     const handleApprove = () => {
-        updateStatus(currentReport.id, 1, "Спасибо! Отчет принят."); // Approved
+        updateStatus(currentReport.Id || currentReport.id, 1, "Спасибо! Отчет принят."); // Approved
     };
 
    const handleReject = () => {
         if (!rejectReason) return alert("Укажите причину отказа");
-        updateStatus(currentReport.id, 2, rejectReason); // Rejected
+        updateStatus(currentReport.Id || currentReport.id, 2, rejectReason); // Rejected
     };
     if (loading) return <div>Загрузка отчетов...</div>;
     return(
@@ -66,14 +67,17 @@ const ReportReview = () => {
                     {reports.length > 0 ? (
                         <div className={s.content}>
                             <div className={s.imageBox}>
-                                <img src={currentReport.img} alt="report" />
+                                <img 
+                                src={`${API_BASE_URL}${currentReport.PhotoUrl || currentReport.photoUrl}`} 
+                                    alt="report"
+                                 />
                                 <div className={s.typeBadge}>{currentReport.wasteTypeName}</div>
                             </div>
 
                             <div className={s.info}>
-                                <p><strong>Отправитель:</strong> {currentReport.userName}</p>
-                                <p><strong>Точка:</strong> {currentReport.pointName}</p>
-                                <p><strong>Вес:</strong> {currentReport.weight} кг</p>
+                                <p><strong>Отправитель:</strong> {currentReport.UserName || currentReport.userName}</p>
+                                <p><strong>Точка:</strong> {currentReport.PointName || currentReport.pointName}</p>
+                                <p><strong>Вес:</strong> {currentReport.Weight || currentReport.weight} кг</p>
                             </div>
 
                             {!isRejecting ? (

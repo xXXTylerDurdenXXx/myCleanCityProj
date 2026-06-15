@@ -1,5 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
+import Header from '../components/Header';
 import s from './SupportChat.module.css';
+import { useNavigate } from 'react-router-dom'; 
+import api from '../api/axios';
+import * as signalR from '@microsoft/signalr';
 
 const getCurrentTime = () => {
     const now = new Date();
@@ -18,14 +22,79 @@ const SupportChat = () => {
   ]);
   
   const [inputValue, setInputValue] = useState("");
-  const messagesEndRef = useRef(null); 
+  const [chatId, setChatId] = useState(null); 
+  const messagesEndRef = useRef(null);
+  const [moderatorCalled, setModeratorCalled] = useState(false);
+  const connectionRef = useRef(null);
+
+  useEffect(() => {
+    api.get('/Chat/my-chat').then(res => setChatId(res.data.chatId));
+  }, []);
+
+  useEffect(() => {
+         const connection = new signalR.HubConnectionBuilder()
+          .withUrl("http://192.168.1.244:5000/supportChat", {
+              accessTokenFactory: () => localStorage.getItem("token")
+          })
+          .withAutomaticReconnect()
+          .build();
+
+      connection.on("ReceiveMessage", (message) => {
+
+          if (message.chatId !== chatId) return;
+
+          setMessages(prev => [...prev, {
+              id: Date.now(),
+              text: message.text,
+              sender: message.isSupportReply ? "bot" : "user",
+              time: getCurrentTime()
+          }]);
+
+          if (message.isSupportReply) {
+              setModeratorCalled(true);
+          }
+      });
+      connection.on("ChatClosed", () => {
+
+          addBotMessage(
+              "Диалог завершён оператором"
+          );
+
+          setModeratorCalled(false);
+      });
+
+      const startConnection = async () => {
+
+          try {
+
+              await connection.start();
+
+              connectionRef.current = connection;
+
+              console.log("SignalR connected");
+
+          } catch (err) {
+              console.error(err);
+          }
+      };
+
+      startConnection();
+
+      return () => {
+          connection.stop();
+      };
+
+  }, [chatId]);
+
+  
 
   const categories = [
-    { id: 1, text: "Не работает точка", icon: "bx-block" },
-    { id: 2, text: "Оборудование", icon: "bx-wrench" },
-    { id: 3, text: "Баллы и оплата", icon: "bx-credit-card" },
-    { id: 4, text: "Личный кабинет", icon: "bx-user" },
+    { id: 1, text: "Не работает точка", icon: "bx-block", action: "call" },
+    { id: 2, text: "Оборудование", icon: "bx-wrench", action: "call" },
+    { id: 3, text: "Не начисляются баллы", icon: "bx-credit-card", action: "info" },
+    { id: 4, text: "Личный кабинет", icon: "bx-user", action: "info" },
   ];
+
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -34,39 +103,115 @@ const SupportChat = () => {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+    
 
-  
+  const notifyModerator = async () => {
+    if (!chatId) return;
+    if (moderatorCalled) return;
 
-  // 2. Функция отправки сообщения
-  const sendMessage = (text) => {
-    if (!text.trim()) return;
+    try {
+      await api.post('/Chat/call-moderator', chatId, {
+          headers: {
+              'Content-Type': 'application/json'
+          }
+      });
+      setModeratorCalled(true);
 
-    const userMsg = {
-      id: Date.now(),
+      addBotMessage("Оператор подключается к чату, пожалуйста, подождите...");
+    } catch (e) {
+      console.error("Ошибка вызова модератора", e);
+    }
+  };
+
+  const addBotMessage = (text) => {
+    setMessages(prev => [...prev, {
+      id: Date.now() + Math.random(),
       text: text,
-      sender: "user",
+      sender: "bot",
       time: getCurrentTime()
-    };
-
-    setMessages(prev => [...prev, userMsg]);
-    setInputValue("");
-
-    // 3. Имитация ответа бота
-    setTimeout(() => {
-      const botReply = {
-        id: Date.now() + 1,
-        text: "Ваше сообщение передано модератору системы «Чистый город». Ожидайте ответа.",
-        sender: "bot",
-        time: getCurrentTime()
-      };
-      setMessages(prev => [...prev, botReply]);
-    }, 1000);
+    }]);
   };
 
-  const handleManualSend = () => {
-    sendMessage(inputValue);
-    setInputValue("");
+  // Функция отправки сообщения
+  const sendMessage = async (
+      text,
+      isCategory = false,
+      categoryAction = null
+  ) => {
+
+      if (!text.trim()) return;
+
+      setInputValue("");
+
+      try {
+
+          if (connectionRef.current) {
+
+              await connectionRef.current.invoke(
+                  "SendMessage",
+                  chatId,
+                  text
+              );
+          }
+
+      } catch (err) {
+          console.error(err);
+      }
+
+      if (moderatorCalled) {
+          return;
+      }
+
+      setTimeout(async () => {
+
+          if (isCategory) {
+
+              if (categoryAction === "call") {
+
+                  addBotMessage("Передаю ваш запрос оператору...");
+
+                  await notifyModerator();
+
+                  return;
+              }
+
+              const replies = {
+
+                  "Не начисляются баллы":
+                      "Похоже, заявка ещё обрабатывается.",
+
+                  "Личный кабинет":
+                      "Настройки доступны в профиле."
+              };
+
+              if (replies[text]) {
+
+                  addBotMessage(replies[text]);
+
+              } else {
+
+                  addBotMessage("Передаю оператору...");
+
+                  await notifyModerator();
+              }
+
+          } else {
+
+              addBotMessage(
+                  "Передаю ваш вопрос оператору..."
+              );
+
+              await notifyModerator();
+          }
+
+      }, 600);
   };
+
+  const handleCategoryClick = (category) => {
+    sendMessage(category.text, true, category.action);
+  };
+
+  const handleManualSend = () => sendMessage(inputValue);
 
  return (
     <div className={s.chatWrapper}>
@@ -74,6 +219,11 @@ const SupportChat = () => {
         <span>Поддержка "Чистый город"</span>
         <button className={s.chatClose}><i className='bx bx-x'></i></button>
       </div>
+        {moderatorCalled && (
+          <div className={s.moderatorBanner}>
+            Оператор подключён
+          </div>
+        )}
 
       <div className={s.chatMessages}>
         {messages.map((msg) => (
@@ -98,7 +248,7 @@ const SupportChat = () => {
           <button 
             key={cat.id} 
             className={s.categoryPill}
-            onClick={() => sendMessage(cat.text)} 
+            onClick={() => handleCategoryClick(cat)} 
           >
             <i className={`bx ${cat.icon}`}></i> {cat.text}
           </button>
