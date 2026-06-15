@@ -1,85 +1,189 @@
 .leaderboardWrapper {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 100px 20px 40px; 
-    min-height: 100vh;
-    min-width: 100vw;
-    background-color: #e8f0f3;
-}
-
-.leaderboardCard {
-    width: 100%;
-    max-width: 800px;
-    background: #f3f9fb;
-    border-radius: 20px;
-    border: 2px solid #0077c8;
-    padding: 30px;
-    text-align: center;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.05);
-}
-
-.title {
-    color: #1e3a8a;
-    margin-bottom: 5px;
-}
-
-.subtitle {
-    color: #667eea;
-    margin-bottom: 25px;
-    font-size: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: calc(var(--header-height) + 24px) 20px 40px;
+  min-height: 100vh;
+  width: 100%;
+  background: var(--color-bg-page);
 }
 
 .filterButtons {
-    display: flex;
-    justify-content: center;
-    gap: 10px;
-    margin-bottom: 25px;
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
 }
 
 .filterButtons button {
-    background: none;
-    border: 2px solid #1e90ff;
-    border-radius: 20px;
-    padding: 8px 20px;
-    color: #1e90ff;
-    cursor: pointer;
-    font-weight: 600;
-    transition: 0.3s;
+  background: var(--color-white);
+  border: 2px solid var(--color-accent);
+  border-radius: 24px;
+  padding: 9px 22px;
+  color: var(--color-accent);
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+  transition: background var(--transition), color var(--transition), transform var(--transition);
 }
 
-.filterButtons button.active, 
 .filterButtons button:hover {
-    background-color: #1e90ff;
-    color: white;
+  background-color: var(--color-accent);
+  color: white;
+  transform: translateY(-1px);
+}
+
+.filterButtons button.active {
+  background-color: var(--color-accent);
+  color: white;
+  box-shadow: 0 4px 12px rgba(30, 144, 255, 0.3);
+}
+
+.leaderboardCard {
+  width: 100%;
+  max-width: 800px;
+  background: var(--color-white);
+  border-radius: var(--radius-lg);
+  border: 2px solid var(--color-accent-deep);
+  padding: 32px;
+  text-align: center;
+  box-shadow: var(--shadow-soft);
+  animation: fadeSlideUp 0.4s ease-out;
+}
+
+@keyframes fadeSlideUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.title {
+  color: var(--color-primary-dark);
+  margin-bottom: 4px;
+  font-size: 26px;
+  font-weight: 700;
+}
+
+.subtitle {
+  color: var(--color-accent-light);
+  margin-bottom: 28px;
+  font-size: 14px;
 }
 
 .table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 10px;
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 8px;
 }
 
 .table th {
-    padding: 15px;
-    color: #1e3a8a;
-    border-bottom: 2px solid #1e90ff;
-    text-align: left;
+  padding: 14px 16px;
+  color: var(--color-primary-dark);
+  border-bottom: 2px solid var(--color-accent);
+  text-align: left;
+  font-size: 14px;
+  font-weight: 600;
 }
 
 .table td {
-    padding: 15px;
-    text-align: left;
-    border-bottom: 1px solid #e0e0e0;
+  padding: 14px 16px;
+  text-align: left;
+  border-bottom: 1px solid #edf2f7;
+  font-size: 15px;
+  transition: background var(--transition);
 }
 
-.rankCol { width: 80px; text-align: center !important; }
-.pointsCol { text-align: right !important; color: #0077c8; font-weight: bold; }
-.top1 { background-color: #fff9c4; font-weight: bold; }
-.top2 { background-color: #f5f5f5; }
-.top3 { background-color: #fff3e0; }
+.table tbody tr:hover td {
+  background: rgba(41, 128, 185, 0.04);
+}
+
+.rankCol {
+  width: 80px;
+  text-align: center !important;
+  font-weight: 700;
+  color: var(--color-primary-dark);
+}
+
+.pointsCol {
+  text-align: right !important;
+  color: var(--color-accent-deep);
+  font-weight: bold;
+}
+
+.top1 {
+  background-color: #fff9c4;
+  font-weight: bold;
+}
+
+.top2 {
+  background-color: #f0f4f8;
+}
+
+.top3 {
+  background-color: #fff3e0;
+}
+
+.top1 td:first-child::before { content: '🥇 '; }
+.top2 td:first-child::before { content: '🥈 '; }
+.top3 td:first-child::before { content: '🥉 '; }
 
 .error {
-    padding: 20px;
-    color: #c53030;
+  padding: 20px;
+  color: #c53030;
+}
+
+@media (max-width: 600px) {
+  .leaderboardCard {
+    padding: 24px 16px;
+    border-radius: 16px;
+  }
+
+  .title {
+    font-size: 22px;
+  }
+
+  .table thead {
+    display: none;
+  }
+
+  .table tbody tr {
+    display: block;
+    margin-bottom: 12px;
+    border: 1px solid #e8edf2;
+    border-radius: var(--radius-md);
+    padding: 12px 16px;
+    background: var(--color-white);
+  }
+
+  .table tbody tr.top1 { background-color: #fffde7; }
+  .table tbody tr.top2 { background-color: #f8fafc; }
+  .table tbody tr.top3 { background-color: #fff8f0; }
+
+  .table td {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 0;
+    border-bottom: none;
+    text-align: right !important;
+  }
+
+  .table td::before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: var(--color-text-muted);
+    font-size: 13px;
+    text-align: left;
+    margin-right: 12px;
+  }
+
+  .rankCol::before { content: 'Место'; }
+  .table td:nth-child(2)::before { content: 'Пользователь'; }
+  .pointsCol::before { content: 'Баллы'; }
+
+  .top1 td:first-child::before,
+  .top2 td:first-child::before,
+  .top3 td:first-child::before {
+    content: 'Место';
+  }
 }

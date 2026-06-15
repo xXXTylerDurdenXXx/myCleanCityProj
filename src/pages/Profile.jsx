@@ -92,7 +92,7 @@ const Profile = () => {
     localStorage.removeItem('token'); // Чистим токен
     navigate('/');
   };
-  if (loading) return <div className={s.profilePage}><Header /><p style={{textAlign:'center', marginTop:'50px'}}>Загрузка...</p></div>;
+  if (loading) return <div className={s.profilePage}><Header /><p className={s.loadingText}>Загрузка...</p></div>;
 
   return (
     <div className={s.profilePage}>

@@ -33,23 +33,20 @@ const App = () => {
 
   return (
     <Router>
-      <div className="app-container">
-        <Routes>
-          <Route path="/" element={<Login />} />
-          <Route path="/register" element={<Register/>} />
-          <Route path='/forgot-password' element={<ForgotPassword/>} />
-          <Route path='/map' element={<MapPage/>} />
-          <Route path='/leaderboard' element={<Leaderboard/>} />
-          <Route path='/profile' element={<Profile/>} />
-          <Route path='/admin' element={isAdmin ? <AdminPanel /> : <Navigate to="/map" />} />
-          <Route path='/supportHub' element={isAdmin || isModerator ? <ModeratorChat /> : <Navigate to="/map" /> } />
-          <Route path='/report' element={isAdmin || isModerator ? <ReportReview /> : <Navigate to="/map" />} />
-          <Route path='/support' element={isUser ? <SupportChat/> : <Navigate to="/map" />} />
+      <Routes>
+        <Route path="/" element={<div className="app-container"><Login /></div>} />
+        <Route path="/register" element={<div className="app-container"><Register /></div>} />
+        <Route path='/forgot-password' element={<div className="app-container"><ForgotPassword /></div>} />
+        <Route path='/map' element={<MapPage/>} />
+        <Route path='/leaderboard' element={<Leaderboard/>} />
+        <Route path='/profile' element={<Profile/>} />
+        <Route path='/admin' element={isAdmin ? <AdminPanel /> : <Navigate to="/map" />} />
+        <Route path='/supportHub' element={isAdmin || isModerator ? <ModeratorChat /> : <Navigate to="/map" /> } />
+        <Route path='/report' element={isAdmin || isModerator ? <ReportReview /> : <Navigate to="/map" />} />
+        <Route path='/support' element={isUser ? <SupportChat/> : <Navigate to="/map" />} />
 
-
-          <Route path="*" element={<Navigate to="/" />} />
-        </Routes>
-      </div>
+        <Route path="*" element={<Navigate to="/" />} />
+      </Routes>
     </Router>
   );
 }

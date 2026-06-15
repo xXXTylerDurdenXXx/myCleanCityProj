@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import * as signalR from '@microsoft/signalr';
-import { useNavigate } from 'react-router-dom';
 import api from '../api/axios';
+import Header from '../components/Header';
 import s from './ModeratorChat.module.css';
 
 const ModeratorChat = () => {
@@ -210,9 +210,9 @@ const ModeratorChat = () => {
     };
 
     return (
-        <div className={s.wrapper}>
-
-            {/* SIDEBAR */}
+        <div className={s.pageWrapper}>
+            <Header />
+            <div className={s.wrapper}>
 
             <div className={s.sidebar}>
 
@@ -326,6 +326,7 @@ const ModeratorChat = () => {
 
             </div>
 
+            </div>
         </div>
     );
 };

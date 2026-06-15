@@ -1,59 +1,82 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import s from './Header.module.css'; 
+import s from './Header.module.css';
 
 const Header = () => {
-    const token = localStorage.getItem('token');
+  const token = localStorage.getItem('token');
+  const location = useLocation();
+  const [menuOpen, setMenuOpen] = useState(false);
 
-    const parseJwt = (token) => {
-        if (!token) return null;
-        try {
-            const base64Url = token.split('.')[1];
-            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-            return JSON.parse(window.atob(base64));
-        } catch (e) { return null; }
-    };
+  const parseJwt = (token) => {
+    if (!token) return null;
+    try {
+      const base64Url = token.split('.')[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      return JSON.parse(window.atob(base64));
+    } catch (e) { return null; }
+  };
 
-    const user = parseJwt(token);
-    // Проверяем, админ ли пользователь
-    const isAdmin = user?.role === "Admin";
-    const isModerator = user?.role === "Moderator"
+  const user = parseJwt(token);
+  const isAdmin = user?.role === 'Admin';
+  const isModerator = user?.role === 'Moderator';
+
+  useEffect(() => {
+    setMenuOpen(false);
+  }, [location.pathname]);
+
+  useEffect(() => {
+    document.body.style.overflow = menuOpen ? 'hidden' : '';
+    return () => { document.body.style.overflow = ''; };
+  }, [menuOpen]);
+
+  const isActive = (path) => location.pathname === path;
+
+  const navLinks = [
+    isAdmin && { to: '/admin', label: 'Админ-панель' },
+    { to: '/map', label: 'Карта' },
+    { to: '/leaderboard', label: 'Лидеры' },
+    { to: '/profile', label: 'Профиль' },
+    (isAdmin || isModerator) && { to: '/report', label: 'Фото-отчеты' },
+    (isAdmin || isModerator) && { to: '/supportHub', label: 'Поддержка' },
+    !isAdmin && !isModerator && { to: '/support', label: 'Поддержка' },
+  ].filter(Boolean);
 
   return (
     <header className={s.header}>
-      <div className={s['header-container']}> 
+      <div className={s.headerContainer}>
         <Link to="/map" className={s.logo}>
           <img src="/Resources/robot.png" alt="logo" />
           <span>Чистый город</span>
         </Link>
-        <nav className={s['nav-menu']}>
-          {isAdmin && (
-            <Link translate='no' to="/admin" className={s['nav-link']}>
-              <i className={s['nav-link']}></i> Админ-панель
-            </Link>
-          )}
-          <Link to="/map" className={s['nav-link']}>Карта</Link>
-          <Link to="/leaderboard" className={s['nav-link']}>Лидеры</Link>
-          <Link to="/profile" className={s['nav-link']}>Профиль</Link>
-          {(isAdmin || isModerator) && (
-            <Link translate='no' to="/report" className={s['nav-link']}>
-              <i className={s['nav-link']}></i> Фото-отчеты
-            </Link>
-          )}
-          {(isAdmin || isModerator) && (
-            <Link to="/supportHub" className={s['nav-link']}>
-              Поддержка
-            </Link>
-          )}
-          {!isAdmin && !isModerator && (
-            <Link to="/support" className={s['nav-link']}>
-              Поддержка
-            </Link>
-          )}
 
-
+        <nav className={`${s.navMenu} ${menuOpen ? s.navOpen : ''}`}>
+          {navLinks.map((link) => (
+            <Link
+              key={link.to}
+              to={link.to}
+              className={`${s.navLink} ${isActive(link.to) ? s.active : ''}`}
+              onClick={() => setMenuOpen(false)}
+            >
+              {link.label}
+            </Link>
+          ))}
         </nav>
+
+        <button
+          className={`${s.burger} ${menuOpen ? s.burgerOpen : ''}`}
+          onClick={() => setMenuOpen(!menuOpen)}
+          aria-label="Меню"
+          aria-expanded={menuOpen}
+        >
+          <span />
+          <span />
+          <span />
+        </button>
       </div>
+
+      {menuOpen && (
+        <div className={s.overlay} onClick={() => setMenuOpen(false)} />
+      )}
     </header>
   );
 };

@@ -1,6 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Header from '../components/Header';
 import api from '../api/axios';
+import s from './MapPage.module.css';
+
+const PLACEHOLDER = '/Resources/point.png';
+
+const hasRealPhoto = (url) => url && !url.includes('point.png');
 
 const MapPage = () => {
   const mapRef = useRef(null);
@@ -214,14 +219,28 @@ const MapPage = () => {
     setEditData({});
   };
   const startEditing = () => {
-  const currentIds = selectedPoint.wasteTypesData?.map(w => w.id) || []; 
+    let currentIds = selectedPoint.wasteTypesData?.map(w => w.id) || [];
+    if (currentIds.length === 0 && selectedPoint.wasteTypeNames?.length) {
+      currentIds = wasteTypes
+        .filter((wt) => selectedPoint.wasteTypeNames.includes(wt.name))
+        .map((wt) => wt.id);
+    }
 
-    setEditData({ 
-        name: selectedPoint.name, 
-        address: selectedPoint.address,
-        wasteTypeIds: currentIds.length > 0 ? currentIds : [] 
+    setEditData({
+      name: selectedPoint.name,
+      address: selectedPoint.address,
+      wasteTypeIds: currentIds,
     });
     setIsEditing(true);
+  };
+
+  const toggleWasteType = (id) => {
+    const ids = (editData.wasteTypeIds || []).map(String);
+    const strId = String(id);
+    const next = ids.includes(strId)
+      ? ids.filter((i) => i !== strId)
+      : [...ids, strId];
+    setEditData({ ...editData, wasteTypeIds: next });
   };
 
   const handleDeletePoint = async () => {
@@ -254,12 +273,16 @@ const MapPage = () => {
   }
 };
  const displayNames = selectedPoint?.wasteTypeNames?.join(", ") || "Не указаны";
+ const typeNamesList = selectedPoint?.wasteTypeNames?.length
+   ? selectedPoint.wasteTypeNames
+   : displayNames !== 'Не указаны' ? displayNames.split(', ') : [];
+ const pointImage = selectedPoint?.photoUrl || PLACEHOLDER;
 
   return (
-  <div className="map-page-wrapper"> 
+  <div className={s.mapPageWrapper}> 
       <Header />
-      <div className="map-container">
-      <div className="map-filter">
+      <div className={s.mapContainer}>
+      <div className={s.mapFilter}>
           <select
             value={selectedWasteType}
             onChange={(e) => setSelectedWasteType(e.target.value)}
@@ -273,102 +296,126 @@ const MapPage = () => {
             ))}
           </select>
         </div>
-        <div id="map" ref={mapRef}></div>
+        <div className={s.mapEl} ref={mapRef}></div>
 
         {selectedPoint && (
-        <div className="sidebar">
-          <button className="close-btn" onClick={closeSidebar}>
+        <div className={s.sidebar}>
+          <button className={s.closeBtn} onClick={closeSidebar} aria-label="Закрыть">
             <i className='bx bx-x'></i>
           </button>
 
-          <img src={selectedPoint.photoUrl || '/Resources/point.png'} alt="point" className="sidebar-img" />
+          {!isEditing && (
+            <div className={`${s.photoWrap} ${hasRealPhoto(selectedPoint.photoUrl) ? s.photoReal : s.photoPlaceholder}`}>
+              <img src={pointImage} alt={selectedPoint.name} />
+            </div>
+          )}
 
-          <div className="sidebar-content">
+          <div className={s.sidebarBody}>
             {isEditing ? (
-              /* ОКНО РЕДАКТИРОВАНИЯ И СОЗДАНИЯ */
-              <div className="edit-form">
-                
-                {/* ФОТО: Показываем только если точка УЖЕ существует (не в режиме создания) */}
+              <div className={s.editForm}>
+                <div>
+                  <p className={s.modeLabel}>{isCreating ? 'Создание' : 'Редактирование'}</p>
+                  <h2 className={s.title}>{isCreating ? 'Новая точка' : editData.name || selectedPoint.name}</h2>
+                </div>
+
                 {!isCreating && (
-                  <div className="edit-photo-section" style={{ marginBottom: '15px', textAlign: 'center' }}>
-                    <img src={selectedPoint.photoUrl || '/Resources/point.png'} alt="preview" style={{ width: '100px', borderRadius: '8px' }} />
-                    <input 
-                      type="file" 
-                      id="photoInput" 
-                      hidden 
-                      onChange={handlePhotoChange} 
+                  <div className={`${s.photoEdit} ${!hasRealPhoto(selectedPoint.photoUrl) ? s.photoEditPlaceholder : ''}`}>
+                    <img src={pointImage} alt="preview" />
+                    <input
+                      type="file"
+                      id="photoInput"
+                      hidden
+                      onChange={handlePhotoChange}
                       accept="image/*"
                     />
-                    <button 
+                    <button
+                      type="button"
+                      className={s.btnPhoto}
                       onClick={() => document.getElementById('photoInput').click()}
-                      style={{ display: 'block', margin: '10px auto', fontSize: '12px' }}
                     >
-                      Сменить фото
+                      <i className='bx bx-image-add'></i> Сменить фото
                     </button>
                   </div>
                 )}
 
-                <label>Название:</label>
-                <input 
-                  type="text" 
-                  value={editData.name} 
-                  onChange={(e) => setEditData({...editData, name: e.target.value})} 
-                />
-                
-                <label>Адрес:</label>
-                <textarea 
-                  value={editData.address} 
-                  onChange={(e) => setEditData({...editData, address: e.target.value})} 
-                />
-                <label>Типы отходов (удерживайте Ctrl для выбора нескольких):</label>
-                <select 
-                  multiple={true} // Разрешаем выбирать несколько
-                  style={{ height: '100px' }} // Чтобы было удобно выбирать
-                  value={editData.wasteTypeIds || []}
-                  onChange={(e) => {
-                    // Собираем все выбранные ID в массив
-                    const selectedOptions = Array.from(e.target.selectedOptions).map(opt => opt.value);
-                    setEditData({...editData, wasteTypeIds: selectedOptions});
-                  }}
-                >
-                  {wasteTypes.map(t => (
-                    <option key={t.id} value={t.id}>{t.name}</option>
-                  ))}
-                </select>
-                {/* Кнопка "Сохранить" теперь универсальная */}
-                <button className="btn-save" onClick={handleSaveButtonClick}>
-                  {isCreating ? "Создать точку" : "Сохранить изменения"}
-                </button>
-                
-                {/* УДАЛЕНИЕ: Показываем кнопку только если мы редактируем существующую точку */}
-                {!isCreating && (
-                  <button 
-                    className="btn-delete" 
-                    onClick={handleDeletePoint}
-                    style={{ backgroundColor: '#e74c3c', color: 'white', marginTop: '10px', width: '100%', padding: '10px', borderRadius: '8px', border: 'none' }}
-                  >
-                    Удалить точку
+                <div className={s.field}>
+                  <label>Название</label>
+                  <input
+                    type="text"
+                    value={editData.name}
+                    onChange={(e) => setEditData({ ...editData, name: e.target.value })}
+                  />
+                </div>
+
+                <div className={s.field}>
+                  <label>Адрес</label>
+                  <textarea
+                    value={editData.address}
+                    onChange={(e) => setEditData({ ...editData, address: e.target.value })}
+                  />
+                </div>
+
+                <div className={s.field}>
+                  <label>Типы отходов</label>
+                  <div className={s.chipGroup}>
+                    {wasteTypes.map((t) => {
+                      const active = (editData.wasteTypeIds || []).map(String).includes(String(t.id));
+                      return (
+                        <button
+                          key={t.id}
+                          type="button"
+                          className={`${s.chip} ${active ? s.chipActive : ''}`}
+                          onClick={() => toggleWasteType(t.id)}
+                        >
+                          {t.name}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className={s.formActions}>
+                  <button type="button" className={s.btnSave} onClick={handleSaveButtonClick}>
+                    {isCreating ? 'Создать точку' : 'Сохранить изменения'}
                   </button>
-                )}
-                
-                <button className="btn-cancel" onClick={() => isCreating ? closeSidebar() : setIsEditing(false)} style={{ width: '100%', marginTop: '5px' }}>
-                  Отмена
-                </button>
+                  {!isCreating && (
+                    <button type="button" className={s.btnDelete} onClick={handleDeletePoint}>
+                      Удалить точку
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    className={s.btnCancel}
+                    onClick={() => isCreating ? closeSidebar() : setIsEditing(false)}
+                  >
+                    Отмена
+                  </button>
+                </div>
               </div>
             ) : (
-              /* ОКНО ИНФОРМАЦИИ (ПРОСМОТР) */
               <>
-                <h2 className="sidebar-title">{selectedPoint.name}</h2>
-                <p className="sidebar-address">
-                  <i className='bx bx-map'></i> {selectedPoint.address || 'Адрес не указан'}
+                <h2 className={s.title}>{selectedPoint.name}</h2>
+                <p className={s.address}>
+                  <i className='bx bx-map'></i>
+                  <span>{selectedPoint.address || 'Адрес не указан'}</span>
                 </p>
-                <p><strong>Типы:</strong> {displayNames || 'Не указаны'}</p>
+                <div className={s.typesSection}>
+                  <div className={s.typesLabel}>Типы</div>
+                  <div className={s.typeBadges}>
+                    {typeNamesList.length > 0 ? (
+                      typeNamesList.map((name) => (
+                        <span key={name} className={s.typeBadge}>{name}</span>
+                      ))
+                    ) : (
+                      <span className={s.typeBadgeEmpty}>Не указаны</span>
+                    )}
+                  </div>
+                </div>
                 {isAdmin && (
-                  <button className="btn-edit" onClick={startEditing} style={{ marginTop: '10px', backgroundColor: '#f39c12', color: 'white', width: '100%', padding: '10px', borderRadius: '8px', border: 'none', cursor: 'pointer' }}>
+                  <button type="button" className={s.btnEdit} onClick={startEditing}>
                     <i className='bx bx-edit'></i> Редактировать точку
                   </button>
                 )}
-                
               </>
             )}
           </div>

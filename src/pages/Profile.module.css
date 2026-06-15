@@ -1,149 +1,203 @@
 .profilePage {
-    background: linear-gradient(135deg, #2980B9 0%);
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    font-family: 'Inter', sans-serif;
+  background: linear-gradient(145deg, var(--color-primary) 0%, #1a6fa0 50%, var(--color-primary-dark) 100%);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  font-family: 'Inter', sans-serif;
+}
+
+.profileContainer {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: calc(var(--header-height) + 32px) 20px 40px;
 }
 
 .profileCard {
-    background: white;
-    border-radius: 24px; 
-    padding: 60px 50px; 
-    display: flex;
-    gap: 60px;
-    box-shadow: 0 20px 50px rgba(0,0,0,0.15);
-    max-width: 2400px;
-    align-items: flex-start; 
+  background: var(--color-white);
+  border-radius: var(--radius-lg);
+  padding: 48px 44px;
+  display: flex;
+  gap: 48px;
+  box-shadow: var(--shadow-card);
+  max-width: 860px;
+  width: 100%;
+  align-items: flex-start;
+  animation: fadeSlideUp 0.4s ease-out;
+}
+
+@keyframes fadeSlideUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .profileLeft {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding-top: 20px; 
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .profileLeft img {
-    width: 220px;
-    height: 220px;
-    border-radius: 50%;
-    object-fit: cover;
-    margin-bottom: 25px;
-    border: none; 
+  width: 180px;
+  height: 180px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-bottom: 20px;
+  border: 4px solid rgba(41, 128, 185, 0.15);
+  box-shadow: 0 8px 24px rgba(41, 128, 185, 0.15);
 }
 
 .uploadLabel {
-    text-decoration: none;
-    color: #4299e1;
-    cursor: pointer;
-    font-size: 14px;
-    font-weight: 500;
-    display: flex;
-    align-items: center;
-    gap: 7px;
+  text-decoration: none;
+  color: var(--color-accent);
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  transition: background var(--transition);
+}
+
+.uploadLabel:hover {
+  background: rgba(30, 144, 255, 0.08);
 }
 
 .profileRight {
-    flex: 1.2;
-    text-align: left;
+  flex: 1;
+  text-align: left;
+  min-width: 0;
 }
 
-.title {
-    color: #1e3a8a;
-    font-size: 32px; 
-    font-weight: 700;
-    margin-bottom: 30px;
-    line-height: 1.2;
+.profileRight h2 {
+  color: var(--color-primary-dark);
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 28px;
+  line-height: 1.2;
 }
 
 .inputGroup {
-    margin-bottom: 20px;
+  margin-bottom: 18px;
 }
 
 .inputGroup label {
-    display: block;
-    margin-bottom: 8px;
-    font-weight: 600;
-    color: #4a5568;
-    font-size: 15px;
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  font-size: 14px;
 }
 
 .inputGroup input {
-    width: 100%;
-    padding: 14px 18px;
-    border-radius: 10px;
-    border: 1px solid #e2e8f0; 
-    background: #f7fafc; 
-    font-size: 15px;
-    outline: none;
-    color: #2d3748;
+  width: 100%;
+  padding: 13px 16px;
+  border-radius: var(--radius-sm);
+  border: 2px solid #e8edf2;
+  background: #f8fafc;
+  font-size: 15px;
+  outline: none;
+  color: #2d3748;
+  transition: border-color var(--transition), box-shadow var(--transition);
 }
 
-.inputGroup input::placeholder {
-    color: #a0aec0; 
+.inputGroup input:focus {
+  border-color: var(--color-accent-light);
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.12);
 }
 
 .pointsPill {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    background: #ebfbf2;
-    color: #38a169;
-    padding: 10px 20px;
-    border-radius: 50px;
-    font-weight: 700;
-    font-size: 14px;
-    margin: 10px 0 30px 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--color-success-bg);
+  color: var(--color-success);
+  padding: 10px 20px;
+  border-radius: 50px;
+  font-weight: 700;
+  font-size: 14px;
+  margin: 8px 0 28px;
 }
 
 .profileActions {
-    display: flex;
-    align-items: center;
-    gap: 25px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
 }
 
 .btnSave {
-    background: #2980B9; 
-    color: white;
-    border: none;
-    padding: 14px 30px;
-    border-radius: 10px;
-    font-weight: 700;
-    font-size: 15px;
-    cursor: pointer;
-    transition: background 0.3s;
+  background: var(--color-primary);
+  color: white;
+  border: none;
+  padding: 13px 28px;
+  border-radius: var(--radius-sm);
+  font-weight: 700;
+  font-size: 15px;
+  cursor: pointer;
+  transition: background var(--transition), transform var(--transition), box-shadow var(--transition);
 }
 
 .btnSave:hover {
-    background: #187bcd;
+  background: #2471a3;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(41, 128, 185, 0.3);
 }
 
 .btnLogout {
-    color: #f56565; 
-    text-decoration: none;
-    font-weight: 700;
-    font-size: 15px;
-    cursor: pointer;
-    background: none;
-    border: none;
-    padding: 0;
+  color: #f56565;
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 15px;
+  cursor: pointer;
+  padding: 8px 0;
+  transition: color var(--transition);
+}
+
+.btnLogout:hover {
+  color: #e53e3e;
+}
+
+.loadingText {
+  text-align: center;
+  margin-top: 120px;
+  color: white;
+  font-size: 16px;
 }
 
 @media (max-width: 768px) {
-    .profileCard {
-        flex-direction: column;
-        align-items: center;
-        padding: 40px 20px;
-        gap: 30px;
-    }
-    .profileLeft {
-        padding-top: 0;
-    }
-    .profileRight {
-        width: 100%;
-    }
+  .profileCard {
+    flex-direction: column;
+    align-items: center;
+    padding: 36px 24px;
+    gap: 28px;
+  }
+
+  .profileLeft img {
+    width: 140px;
+    height: 140px;
+  }
+
+  .profileRight {
+    width: 100%;
+  }
+
+  .profileRight h2 {
+    font-size: 24px;
+    text-align: center;
+  }
+
+  .profileActions {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .btnSave {
+    width: 100%;
+    text-align: center;
+  }
 }

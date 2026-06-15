@@ -144,6 +144,7 @@ const AdminPanel = () => {
                     {activeTab === 'users' && (
                         <div className={s.card}>
                             <h3>Управление пользователями</h3>
+                            <div className={s.tableWrapper}>
                             <table className={s.table}>
                                 <thead>
                                     <tr>
@@ -173,12 +174,14 @@ const AdminPanel = () => {
                                 ))}
                                 </tbody>
                             </table>
+                            </div>
                         </div>
                     )}
                     {/* 2. ВКЛАДКА ТОЧКИ СБОРА */}
                     {activeTab === 'points' && (
                     <div className={s.card}>
                         <h3>Управление точками на карте</h3>
+                        <div className={s.tableWrapper}>
                         <table className={s.table}>
                             <thead>
                                 <tr>
@@ -216,6 +219,7 @@ const AdminPanel = () => {
                                 ))}
                             </tbody>
                         </table>
+                        </div>
                     </div>
                     )}
                     
@@ -223,6 +227,7 @@ const AdminPanel = () => {
                     {activeTab === 'reports' && (
                     <div className={s.card}>
                         <h3>История отправленных отчетов</h3>
+                        <div className={s.tableWrapper}>
                         <table className={s.table}>
                             <thead>
                                 <tr>
@@ -263,6 +268,7 @@ const AdminPanel = () => {
                                 ))}
                             </tbody>
                         </table>
+                        </div>
                         {reports.length === 0 && !loading && <p>Отчетов пока нет</p>}
                     </div>
                 )}

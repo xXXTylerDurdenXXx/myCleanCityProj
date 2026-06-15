@@ -9,7 +9,7 @@ const ReportReview = () => {
     const [rejectReason, setRejectReason] = useState("");
     const [isRejecting, setIsRejecting] = useState(false);
 
-    const API_BASE_URL = 'http://192.168.1.244:5000';
+    const API_BASE_URL = 'http://89.108.66.220:5000';
     const fetchPendingReports = async () => {
         setLoading(true);
         try {

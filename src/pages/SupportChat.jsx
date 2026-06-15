@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import Header from '../components/Header';
 import s from './SupportChat.module.css';
+import Header from '../components/Header';
 import { useNavigate } from 'react-router-dom'; 
 import api from '../api/axios';
 import * as signalR from '@microsoft/signalr';
@@ -214,11 +214,13 @@ const SupportChat = () => {
   const handleManualSend = () => sendMessage(inputValue);
 
  return (
-    <div className={s.chatWrapper}>
-      <div className={s.chatHeader}>
-        <span>Поддержка "Чистый город"</span>
-        <button className={s.chatClose}><i className='bx bx-x'></i></button>
-      </div>
+    <div className={s.pageWrapper}>
+      <Header />
+      <div className={s.chatPage}>
+        <div className={s.chatWrapper}>
+          <div className={s.chatHeader}>
+            <span>Поддержка «Чистый город»</span>
+          </div>
         {moderatorCalled && (
           <div className={s.moderatorBanner}>
             Оператор подключён
@@ -267,6 +269,8 @@ const SupportChat = () => {
         <button className={s.sendBtn} onClick={handleManualSend}>
           <i className='bx bxs-send'></i>
         </button>
+        </div>
+        </div>
       </div>
     </div>
   );
