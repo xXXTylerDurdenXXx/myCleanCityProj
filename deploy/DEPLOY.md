@@ -1,31 +1,33 @@
 # Деплой фронтенда «Чистый город»
 
 Бэкенд: `http://89.108.66.220:5000`  
-Фронтенд: `http://89.108.66.220` (nginx, порт 80)
+Фронтенд: `http://89.108.66.220` (nginx → `/var/www/mycleancity`)
 
-## 1. Сборка на своём ПК
+---
+
+## Быстрый деплой на сервере (ваш случай)
+
+Репозиторий: `/var/www/myCleanCityProj`  
+Сайт отдаёт nginx из: `/var/www/mycleancity`
 
 ```bash
-npm ci
-npm run build:prod
+cd /var/www/myCleanCityProj
+git pull
+chmod +x deploy/deploy-local.sh
+./deploy/deploy-local.sh
 ```
 
-Артефакты появятся в папке `dist/`.
+Скрипт соберёт проект и скопирует `dist/` в `/var/www/mycleancity`.
 
-Переменные production заданы в `.env.production`:
+> **Важно:** `npm run build:prod` только создаёт папку `dist/` в репозитории.  
+> Nginx смотрит на `/var/www/mycleancity` — без `rsync` сайт не обновится.
 
-| Переменная | Значение |
-|---|---|
-| `VITE_API_URL` | `http://89.108.66.220:5000/api` |
-| `VITE_API_ORIGIN` | `http://89.108.66.220:5000` |
-| `VITE_SIGNALR_URL` | `http://89.108.66.220:5000/supportChat` |
+---
 
-## 2. Первичная настройка сервера (один раз)
+## Первичная настройка nginx (один раз)
 
 ```bash
-# На сервере
-sudo apt update && sudo apt install -y nginx
-
+cd /var/www/myCleanCityProj
 sudo mkdir -p /var/www/mycleancity
 sudo cp deploy/nginx.conf /etc/nginx/sites-available/mycleancity
 sudo ln -sf /etc/nginx/sites-available/mycleancity /etc/nginx/sites-enabled/
@@ -33,45 +35,59 @@ sudo rm -f /etc/nginx/sites-enabled/default
 sudo nginx -t && sudo systemctl reload nginx
 ```
 
-## 3. Загрузка сборки
+---
 
-**Вариант A — скрипт (Linux/macOS/Git Bash):**
+## Проверка после деплоя
 
 ```bash
-chmod +x deploy/deploy.sh
-./deploy/deploy.sh root@89.108.66.220
+# Файлы на месте?
+ls -la /var/www/mycleancity/
+
+# Nginx отвечает?
+curl -I http://127.0.0.1
+
+# Статус nginx
+sudo systemctl status nginx
 ```
 
-**Вариант B — вручную:**
+Откройте в браузере: **http://89.108.66.220**
+
+---
+
+## Деплой с локального ПК
 
 ```bash
+npm ci && npm run build:prod
 scp -r dist/* root@89.108.66.220:/var/www/mycleancity/
 ```
 
-**Вариант C — сборка прямо на сервере:**
+Или: `./deploy/deploy.sh root@89.108.66.220` (сборка + rsync по SSH с ПК).
 
-```bash
-ssh root@89.108.66.220
-git clone <repo-url> /opt/mycleancity && cd /opt/mycleancity
-npm ci && npm run build:prod
-sudo rsync -a dist/ /var/www/mycleancity/
-```
+---
 
-## 4. Проверка
+## Переменные окружения (`.env.production`)
 
-Откройте `http://89.108.66.220` — должна открыться страница входа.
+| Переменная | Значение |
+|---|---|
+| `VITE_API_URL` | `http://89.108.66.220:5000/api` |
+| `VITE_API_ORIGIN` | `http://89.108.66.220:5000` |
+| `VITE_SIGNALR_URL` | `http://89.108.66.220:5000/supportChat` |
+
+---
 
 ## CORS на бэкенде
 
-Фронт и API на разных портах (80 и 5000). Убедитесь, что бэкенд разрешает:
+Фронт (порт 80) и API (порт 5000) — разные origin. На бэкенде нужно:
 
 - `Access-Control-Allow-Origin: http://89.108.66.220`
 - `Access-Control-Allow-Credentials: true`
 
+Без этого логин и запросы к API не будут работать.
+
 ## Альтернатива: nginx-прокси (без CORS)
 
-В `deploy/nginx.conf` есть закомментированные блоки `/api/` и `/supportChat`.  
-После их включения измените `.env.production`:
+В `deploy/nginx.conf` раскомментируйте блоки `/api/` и `/supportChat`,  
+затем в `.env.production`:
 
 ```
 VITE_API_URL=/api
@@ -79,4 +95,4 @@ VITE_API_ORIGIN=
 VITE_SIGNALR_URL=/supportChat
 ```
 
-Пересоберите и залейте заново.
+Пересоберите: `./deploy/deploy-local.sh`
