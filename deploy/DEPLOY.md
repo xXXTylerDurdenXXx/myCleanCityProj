@@ -1,11 +1,37 @@
 # Деплой фронтенда «Чистый город»
 
 Бэкенд: `http://89.108.66.220:5000`  
-Фронтенд: `http://89.108.66.220` (nginx → `/var/www/mycleancity`)
+Фронтенд: `http://89.108.66.220` (порт 80)
 
 ---
 
-## Быстрый деплой на сервере (ваш случай)
+## Docker (одна команда) — рекомендуется
+
+Бэкенд должен уже работать на хосте (порт 5000). Контейнер проксирует `/api`, `/supportChat` и `/uploads` на него — **CORS не нужен**.
+
+```bash
+cd /var/www/myCleanCityProj
+git pull
+
+# Если порт 80 занят системным nginx:
+sudo systemctl stop nginx
+
+docker compose --env-file .env.docker up -d --build
+```
+
+Или: `npm run docker:up`
+
+Проверка: `curl -I http://127.0.0.1` → `200 OK`  
+Сайт: **http://89.108.66.220**
+
+Остановить: `docker compose down`  
+Логи: `docker compose logs -f web`
+
+Другой порт (если 80 занят): `HTTP_PORT=8080 docker compose --env-file .env.docker up -d --build`
+
+---
+
+## Быстрый деплой без Docker (rsync)
 
 Репозиторий: `/var/www/myCleanCityProj`  
 Сайт отдаёт nginx из: `/var/www/mycleancity`
