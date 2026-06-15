@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import * as signalR from '@microsoft/signalr';
 import api from '../api/axios';
+import { SIGNALR_HUB_URL } from '../config';
 import Header from '../components/Header';
 import s from './ModeratorChat.module.css';
 
@@ -43,7 +44,7 @@ const ModeratorChat = () => {
         let isMounted = true;
 
         const connect = new signalR.HubConnectionBuilder()
-            .withUrl("http://89.108.66.220:5000/supportChat", {
+            .withUrl(SIGNALR_HUB_URL, {
                 accessTokenFactory: () => localStorage.getItem("token")
             })
             .withAutomaticReconnect()

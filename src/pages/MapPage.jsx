@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Header from '../components/Header';
 import api from '../api/axios';
+import { resolveMediaUrl } from '../config';
 import s from './MapPage.module.css';
 
 const PLACEHOLDER = '/Resources/point.png';
@@ -276,7 +277,9 @@ const MapPage = () => {
  const typeNamesList = selectedPoint?.wasteTypeNames?.length
    ? selectedPoint.wasteTypeNames
    : displayNames !== 'Не указаны' ? displayNames.split(', ') : [];
- const pointImage = selectedPoint?.photoUrl || PLACEHOLDER;
+ const pointImage = hasRealPhoto(selectedPoint?.photoUrl)
+   ? resolveMediaUrl(selectedPoint.photoUrl)
+   : PLACEHOLDER;
 
   return (
   <div className={s.mapPageWrapper}> 

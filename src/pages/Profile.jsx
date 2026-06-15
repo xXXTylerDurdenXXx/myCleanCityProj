@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
 import api from '../api/axios';
+import { resolveMediaUrl } from '../config';
 import s from './Profile.module.css';
 
 const Profile = () => {
@@ -14,26 +15,18 @@ const Profile = () => {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
-  // Чистый URL сервера без /api на конце
-  const getBaseUrl = () => {
-    const url = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-    return url.replace(/\/api$/, ''); // Убираем /api, если он там есть
-  };
-
   useEffect(() => {
     const fetchUser = async () => {
       try {
         const response = await api.get('/mobile/profile');
         const data = response.data;
         
-        const baseUrl = getBaseUrl();
         setUser({
           name: data.name,
           email: data.email,
           points: data.totalPoints,
-          // Если photoUrl пустой, оставляем дефолт. 
-          avatar: data.photoUrl 
-            ? `${baseUrl}/${data.photoUrl}` 
+          avatar: data.photoUrl
+            ? resolveMediaUrl(data.photoUrl)
             : '/Resources/default-avatar.png'
         });
       } catch (error) {
@@ -58,8 +51,7 @@ const Profile = () => {
       const response = await api.post('/mobile/upload-avatar', formData,{
         headers: { 'Content-Type': 'multipart/form-data' }
       });
-      const baseUrl = getBaseUrl();
-      const newPhotoUrl = `${baseUrl}/${response.data.photoUrl}`;
+      const newPhotoUrl = resolveMediaUrl(response.data.photoUrl);
       setUser(prev => ({ ...prev, avatar: newPhotoUrl }));
       alert("Фото обновлено!");
     }catch(error){

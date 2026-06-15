@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Header from '../components/Header';
 import s from './ReportReview.module.css';
 import api from '../api/axios';
+import { resolveMediaUrl } from '../config';
 
 const ReportReview = () => {
     const [reports, setReports] = useState([]);
@@ -9,7 +10,6 @@ const ReportReview = () => {
     const [rejectReason, setRejectReason] = useState("");
     const [isRejecting, setIsRejecting] = useState(false);
 
-    const API_BASE_URL = 'http://89.108.66.220:5000';
     const fetchPendingReports = async () => {
         setLoading(true);
         try {
@@ -68,7 +68,7 @@ const ReportReview = () => {
                         <div className={s.content}>
                             <div className={s.imageBox}>
                                 <img 
-                                src={`${API_BASE_URL}${currentReport.PhotoUrl || currentReport.photoUrl}`} 
+                                src={resolveMediaUrl(currentReport.PhotoUrl || currentReport.photoUrl)} 
                                     alt="report"
                                  />
                                 <div className={s.typeBadge}>{currentReport.wasteTypeName}</div>

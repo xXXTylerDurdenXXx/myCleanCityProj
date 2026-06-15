@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Header from '../components/Header';
 import s from './AdminPanel.module.css';
 import api from '../api/axios';
+import { resolveMediaUrl } from '../config';
 
 const AdminPanel = () => {
     const [activeTab, setActiveTab] = useState('users');
@@ -197,7 +198,7 @@ const AdminPanel = () => {
                                     <tr key={p.id}>
                                         <td>
                                             {p.photoUrl ? (
-                                                <img src={p.photoUrl} alt="point" className={s.tableImg} style={{width: '50px', height: '50px', objectFit: 'cover', borderRadius: '4px'}} />
+                                                <img src={resolveMediaUrl(p.photoUrl)} alt="point" className={s.tableImg} style={{width: '50px', height: '50px', objectFit: 'cover', borderRadius: '4px'}} />
                                             ) : 'Нет фото'}
                                         </td>
                                         <td>{p.name}</td>
@@ -245,7 +246,7 @@ const AdminPanel = () => {
                                     <tr key={r.id}>
                                         <td>
                                             {r.photoUrl ? (
-                                                <img src={r.photoUrl} alt="report" className={s.tableImg} style={{width: '50px', borderRadius: '4px'}} />
+                                                <img src={resolveMediaUrl(r.photoUrl)} alt="report" className={s.tableImg} style={{width: '50px', borderRadius: '4px'}} />
                                             ) : 'Нет фото'}
                                         </td>
                                         <td>{r.userName}</td>

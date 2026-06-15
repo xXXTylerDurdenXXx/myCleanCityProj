@@ -3,6 +3,7 @@ import s from './SupportChat.module.css';
 import Header from '../components/Header';
 import { useNavigate } from 'react-router-dom'; 
 import api from '../api/axios';
+import { SIGNALR_HUB_URL } from '../config';
 import * as signalR from '@microsoft/signalr';
 
 const getCurrentTime = () => {
@@ -33,7 +34,7 @@ const SupportChat = () => {
 
   useEffect(() => {
          const connection = new signalR.HubConnectionBuilder()
-          .withUrl("http://192.168.1.244:5000/supportChat", {
+          .withUrl(SIGNALR_HUB_URL, {
               accessTokenFactory: () => localStorage.getItem("token")
           })
           .withAutomaticReconnect()
